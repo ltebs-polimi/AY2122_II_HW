@@ -66,6 +66,7 @@ int main(void)
     isr_StartEx(Custom_ISR_ADC);
     AMux_Start();
     EZI2C_Start();
+    UART_Start();
     // maybe a PWM start ?
     
     
@@ -78,7 +79,11 @@ int main(void)
     //SLAVE_BUFFER_SIZE - 4 is the third position, the boundary of the r/w cells 
     EZI2C_SetBuffer1(SLAVE_BUFFER_SIZE, SLAVE_BUFFER_SIZE - 4, slaveBuffer);
 
-       
+    char message[50] = {'\0'};
+    
+    UART_PutString("**************\r\n");
+    UART_PutString("** I2C Scan **\r\n");
+    UART_PutString("**************\r\n");
     
     for (;;)
 
@@ -112,6 +117,9 @@ int main(void)
                     sum_digit_LDR = sum_digit_LDR + value_digit_LDR;
                     sum_digit_TMP = sum_digit_TMP + value_digit_TMP;
                     
+                    sprintf(message, "\r\naverage digit ldr: 0x%2.2ld\r\n", value_digit_LDR);
+                    UART_PutString(message); 
+                    
                     num_samples++;                          //increase the number of samples to compute the average
                     
                     if (num_samples == average_samples){    //check if the number of samples is the right one 
@@ -131,7 +139,7 @@ int main(void)
                         num_samples = 0;
                     }
                   
-                        
+                    
                     ReadValue = 0;                          // Reset the flag for reading value
                     
                 }
@@ -197,7 +205,7 @@ int main(void)
                         num_samples = 0;
                     }
                     
-                        
+                    
                     ReadValue = 0;                          // Reset the flag for reading value
                     
                 }
