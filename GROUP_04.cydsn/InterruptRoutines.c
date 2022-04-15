@@ -20,7 +20,7 @@ interrupt routines source file: at the right frequency,
 extern volatile uint8_t ReadValue;
 
 
-CY_ISR_PROTO(Custom_ISR_ADC){
+CY_ISR(Custom_ISR_ADC){
     
     Timer_ReadStatusRegister();
     

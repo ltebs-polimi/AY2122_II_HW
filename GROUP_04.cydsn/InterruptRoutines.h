@@ -21,7 +21,7 @@ interrupt routines header file
     int32 value_digit_TMP;      //value in digit of TMP sensor from ADC
     int32 value_digit_LDR;      //value in digit of LDR sensor from ADC
 
-    CY_ISR_PROTO(Custom_ISR_ADC);
+    CY_ISR(Custom_ISR_ADC);
     
     
 #endif

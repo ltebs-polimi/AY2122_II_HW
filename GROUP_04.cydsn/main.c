@@ -68,7 +68,7 @@ int main(void)
     EZI2C_Start();
     UART_Start();
     // maybe a PWM start ?
-    
+    CyDelay(5);
     
     ADC_DelSig_StartConvert(); // start ADC conversion
 
@@ -84,6 +84,8 @@ int main(void)
     UART_PutString("**************\r\n");
     UART_PutString("** I2C Scan **\r\n");
     UART_PutString("**************\r\n");
+    
+    CyDelay(10);
     
     for (;;)
 
@@ -102,23 +104,33 @@ int main(void)
         // timer_period = slaveBuffer[CTRL_REG2];
         
         //Write the timer period value to configure the timer to the right frequency
-        Timer_WritePeriod(timer_period);
+        //Timer_WritePeriod(timer_period);
         
+        timer_period = Timer_ReadPeriod();
+        sprintf(message, "case: both on, period_val: %i \r\n", timer_period);
+        UART_PutString(message);
+                    
         //Switch case to check the values of the status bits and sample the right signal(s)
         switch(status_bits){
             
             case SLAVE_BOTH_ON_CTRL_REG1:
                 
+                ReadValue = 1;
+                
                 // Pin_LED_Write(ON);                          // Switch the led on 
                 
                 if (ReadValue == 1) {                       //check if the value is read from the ADC
+
+                    sprintf(message, "hello\r\n");
+                    UART_PutString(message); 
+                    
+                    sprintf(message, "case: both on, ldr_val: %ld \r\n", value_digit_LDR);
+                    UART_PutString(message); 
                     
                     //summing values for the average computation
                     sum_digit_LDR = sum_digit_LDR + value_digit_LDR;
                     sum_digit_TMP = sum_digit_TMP + value_digit_TMP;
                     
-                    sprintf(message, "\r\naverage digit ldr: 0x%2.2ld\r\n", value_digit_LDR);
-                    UART_PutString(message); 
                     
                     num_samples++;                          //increase the number of samples to compute the average
                     
@@ -148,6 +160,9 @@ int main(void)
                 break;
                 
             case SLAVE_TMP_ON_CTRL_REG1:
+                
+                sprintf(message, "case: tmp on\r\n");
+                UART_PutString(message);
                 
                 // Pin_LED_Write(OFF);                         //switch the led off
                 
@@ -181,6 +196,9 @@ int main(void)
                 
             case SLAVE_LDR_ON_CTRL_REG1:
                 
+                sprintf(message, "case: ldr on\r\n");
+                UART_PutString(message); 
+                
                 // Pin_LED_Write(OFF);                         //switch the led off
                 
                 if (ReadValue == 1) {                       //check if the value is read from the ADC
@@ -213,6 +231,9 @@ int main(void)
                 break;
                 
             case SLAVE_MODE_OFF_CTRL_REG1:
+                
+                sprintf(message, "case: both off\r\n");
+                UART_PutString(message);  
                 
                 // Pin_LED_Write(OFF);                         //switch the led off
                 
