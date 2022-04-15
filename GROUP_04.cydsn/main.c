@@ -218,6 +218,8 @@ int main(void)
             
         }
         
+        // sprintf(message, "average digit ldr: 0x%02X", average_digit_LDR);
+        // average_digit_TMP
         
     }
 }

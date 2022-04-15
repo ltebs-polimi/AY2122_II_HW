@@ -14,8 +14,8 @@ interrupt routines source file: at the right frequency,
 #include "InterruptRoutines.h"
 #include "project.h"
 
-#define LDR_CHANNEL 0
-#define TMP_CHANNEL 1
+#define LDR_CHANNEL 1
+#define TMP_CHANNEL 0
 
 extern volatile uint8_t ReadValue;
 
