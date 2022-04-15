@@ -10,12 +10,18 @@
  * ========================================
 */
 #include "project.h"
+#include "utils.h"
+#include "InterruptRoutines.h"
 
 int main(void)
 {
     CyGlobalIntEnable; /* Enable global interrupts. */
-
-    /* Place your initialization/startup code here (e.g. MyInst_Start()) */
+    
+    Timer_Start(); 
+    ADC_DelSig_Start();
+    isr_ADC_StartEx(Custom_ISR_ADC);
+    AMux_Start();
+    EZI2C_Start();
 
     for(;;)
     {
