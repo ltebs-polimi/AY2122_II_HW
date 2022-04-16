@@ -50,6 +50,7 @@ uint8_t average_samples;        //number of samples for the average
 uint8_t status_bits;            //values of the status bit to activate the right channel
 uint8_t timer_period;           //value to set the period of the timer
 uint8_t led_modality;           //value of the led modality
+uint8_t color_channel;          //color combination of the RGB led
 
 
 /***************************************
@@ -67,7 +68,7 @@ int main(void)
     AMux_Start();
     EZI2C_Start();
     UART_Start();
-    // maybe a PWM start ?
+    PWM_LED_Start();
     CyDelay(5);
     
     ADC_DelSig_StartConvert(); // start ADC conversion
@@ -92,7 +93,7 @@ int main(void)
     {
         
         //Extract the number of samples according to the bits 3 and 4 of the control register 1
-        average_samples = (slaveBuffer[CTRL_REG1] & 0x18) >> 3; 
+        average_samples = ((slaveBuffer[CTRL_REG1] & 0x18) >> 3) + 1; 
 
         //Check only the status bits of the control register 1
         status_bits = slaveBuffer[CTRL_REG1] & 0x03;
@@ -100,32 +101,77 @@ int main(void)
         //Check the LED modality of the control register 1
         led_modality = (slaveBuffer[CTRL_REG1] & 0x04) >> 2; 
         
-        //Read from the Control register 2 the timer period
-        // timer_period = slaveBuffer[CTRL_REG2];
+        //Extract the color combination for the RGB led
+        color_channel = slaveBuffer[CTRL_REG1] & 0xE0;
         
         //Write the timer period value to configure the timer to the right frequency
         //Timer_WritePeriod(timer_period);
         
         timer_period = Timer_ReadPeriod();
-        sprintf(message, "case: both on, period_val: %i \r\n", timer_period);
-        UART_PutString(message);
-                    
+        
+        //Switch case to light up the RGB led with the right color combination
+        switch(color_channel){
+            
+            case SLAVE_RED_ON_CTRL_REG1:
+                LED_R_Write(ON_R);
+                LED_G_Write(OFF_G);
+                LED_B_Write(OFF_B);
+            
+            break;
+            
+            case SLAVE_GREEN_ON_CTRL_REG1:
+                LED_R_Write(OFF_R);
+                LED_G_Write(ON_G);
+                LED_B_Write(OFF_B);
+            
+            break;
+                
+            case SLAVE_BLUE_ON_CTRL_REG1:
+                LED_R_Write(OFF_R);
+                LED_G_Write(OFF_G);
+                LED_B_Write(ON_B);
+            
+            break;
+                
+            case SLAVE_RED_GREEN_ON_CTRL_REG1:
+                LED_R_Write(ON_R);
+                LED_G_Write(ON_G);
+                LED_B_Write(OFF_B);
+            
+            break;
+                
+            case SLAVE_RED_BLUE_ON_CTRL_REG1:
+                LED_R_Write(ON_R);
+                LED_G_Write(OFF_G);
+                LED_B_Write(ON_B);
+            
+            break;
+                
+            case SLAVE_GREEN_BLUE_ON_CTRL_REG1:
+                LED_R_Write(OFF_R);
+                LED_G_Write(ON_G);
+                LED_B_Write(ON_B);
+            
+            break;
+                
+            case SLAVE_RED_GREEN_BLUE_ON_CTRL_REG1:
+                LED_R_Write(ON_R);
+                LED_G_Write(ON_G);
+                LED_B_Write(ON_B);
+            
+            break;
+                
+        }
+        
         //Switch case to check the values of the status bits and sample the right signal(s)
         switch(status_bits){
             
             case SLAVE_BOTH_ON_CTRL_REG1:
                 
-                ReadValue = 1;
-                
-                // Pin_LED_Write(ON);                          // Switch the led on 
-                
                 if (ReadValue == 1) {                       //check if the value is read from the ADC
-
-                    sprintf(message, "hello\r\n");
-                    UART_PutString(message); 
                     
-                    sprintf(message, "case: both on, ldr_val: %ld \r\n", value_digit_LDR);
-                    UART_PutString(message); 
+                    // sprintf(message, "case: both on, ldr_val: %ld, tmp_val: %ld \r\n", value_digit_LDR, value_digit_TMP);
+                    // UART_PutString(message); 
                     
                     //summing values for the average computation
                     sum_digit_LDR = sum_digit_LDR + value_digit_LDR;
@@ -135,6 +181,10 @@ int main(void)
                     num_samples++;                          //increase the number of samples to compute the average
                     
                     if (num_samples == average_samples){    //check if the number of samples is the right one 
+                        
+                        sprintf(message, "avg_ldr_val: %ld, avg_tmp_val: %ld \r\n", average_digit_LDR, average_digit_TMP);
+                        UART_PutString(message);
+                        
                         
                         // calculate the average
                         average_digit_LDR = sum_digit_LDR / average_samples;
@@ -245,11 +295,7 @@ int main(void)
                 break;
         
             
-        }
-        
-        // sprintf(message, "average digit ldr: 0x%02X", average_digit_LDR);
-        // average_digit_TMP
-        
+        }    
     }
 }
     

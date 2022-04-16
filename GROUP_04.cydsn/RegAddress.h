@@ -53,15 +53,50 @@ file to define values of registers
     **/
     #define SLAVE_BOTH_ON_CTRL_REG1 0x03
     
-      /**
+    /**
+    *   \brief 8 bit to light up only red channel (status bit 5 = 1, status bit 6 = 0, status bit 7 = 0)
+    **/
+    #define SLAVE_RED_ON_CTRL_REG1 0x20
+    
+    /**
+    *   \brief 8 bit to light up only green channel (status bit 5 = 0, status bit 6 = 1, status bit 7 = 0)
+    **/
+    #define SLAVE_GREEN_ON_CTRL_REG1 0x40
+    
+    /**
+    *   \brief 8 bit to light up only blue channel (status bit 5 = 0, status bit 6 = 0, status bit 7 = 1)
+    **/
+    #define SLAVE_BLUE_ON_CTRL_REG1 0x80
+    
+    /**
+    *   \brief 8 bit to light up both red and green channels (status bit 5 = 1, status bit 6 = 1, status bit 7 = 0)
+    **/
+    #define SLAVE_RED_GREEN_ON_CTRL_REG1 0x60
+    
+    /**
+    *   \brief 8 bit to light up both red and blue channels (status bit 5 = 1, status bit 6 = 0, status bit 7 = 1)
+    **/
+    #define SLAVE_RED_BLUE_ON_CTRL_REG1 0xA0
+    
+    /**
+    *   \brief 8 bit to light up both green and blue channels (status bit 5 = 0, status bit 6 = 1, status bit 7 = 1)
+    **/
+    #define SLAVE_GREEN_BLUE_ON_CTRL_REG1 0xC0
+    
+    /**
+    *   \brief 8 bit to light up all channels (status bit 5 = 1, status bit 6 = 1, status bit 7 = 1)
+    **/
+    #define SLAVE_RED_GREEN_BLUE_ON_CTRL_REG1 0xE0
+    
+    /**
     *   \ Change LED modality to use the LDR
     **/
-    #define SLAVE_LED_LDR 0x00
+    //#define SLAVE_LED_LDR 0x00
     
-          /**
+    /**
     *   \ Change LED modality to use the TMP
     **/
-    #define SLAVE_LED_TMP 0x01
+    //#define SLAVE_LED_TMP 0x01
     
   
     
