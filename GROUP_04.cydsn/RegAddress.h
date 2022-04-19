@@ -88,6 +88,11 @@ file to define values of registers
     **/
     #define SLAVE_RED_GREEN_BLUE_ON_CTRL_REG1 0xE0
     
+        /**
+    *   \brief 8 bit to turn off all channels (status bit 5 = 0, status bit 6 = 0, status bit 7 = 0)
+    **/
+    #define SLAVE_RED_GREEN_BLUE_OFF_CTRL_REG1 0x00
+    
     /**
     *   \ Change LED modality to use the LDR
     **/
@@ -98,10 +103,8 @@ file to define values of registers
     **/
     //#define SLAVE_LED_TMP 0x01
     
+ 
   
-    
-   
-    
 #endif
 
 
