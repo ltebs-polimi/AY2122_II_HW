@@ -16,7 +16,8 @@ file to define registers values
     *   \brief 7-bit I2C address of the slave device.
     */
     #define SLAVE_DEVICE_ADDRESS 0x08
-
+    
+    
     /**
     *   \WHO AM I register address
     */
@@ -87,7 +88,7 @@ file to define registers values
     */
     #define TMP_channel 1
     
-    extern int channel;
+    
 
 #endif
 /* [] END OF FILE */

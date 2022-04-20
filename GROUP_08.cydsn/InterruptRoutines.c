@@ -13,9 +13,8 @@ Interrupt Routines source file
 #include "project.h"
 #include "utils.h"
 
-int32 TMP_meas;
-int32 LDR_meas;
 
+extern uint8_t channel;
 
 
 uint8 SendFlag = 0;
@@ -25,6 +24,7 @@ CY_ISR (Custom_ISR_ADC)
     Timer_ReadStatusRegister();
     if (ReadADC_Flag==1)
     {
+        
         
         switch (channel)
         {

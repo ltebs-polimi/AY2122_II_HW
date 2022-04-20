@@ -20,6 +20,9 @@ Interrupt Routines header file
     
     uint8_t DataBuffer[TRANSMIT_BUFFER_SIZE];
     
+    int32 TMP_meas;
+    int32 LDR_meas;
+    
     volatile uint8 ReadADC_Flag; 
 
     CY_ISR_PROTO(Custom_ISR_ADC);
