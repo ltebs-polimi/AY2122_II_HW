@@ -28,21 +28,21 @@ CY_ISR (Custom_ISR_ADC)
         
         switch (channel)
         {
-            case 1:
+            case SLAVE_LDR:
                 AMux_FastSelect(LDR_channel);
                 LDR_meas = ADC_DelSig_Read32();
                 if (LDR_meas<0) LDR_meas = 0;
                 if (LDR_meas>65535) LDR_meas = 65535;
                 break;
                 
-            case 2:
+            case SLAVE_TMP:
                 AMux_FastSelect(TMP_channel);
                 TMP_meas = ADC_DelSig_Read32();
                 if (TMP_meas<0) TMP_meas = 0;
                 if (TMP_meas>65535) TMP_meas = 65535;
             break;
                 
-            case 3: //Read both channels and save the variable
+            case SLAVE_BOTH: //Read both channels and save the variable
                 AMux_FastSelect(LDR_channel);
                 LDR_meas = ADC_DelSig_Read32();
                 if (LDR_meas<0) LDR_meas = 0;

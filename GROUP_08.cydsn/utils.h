@@ -29,7 +29,26 @@ file to define registers values
     #define SLAVE_WHOAMI_RETVAL     0xBC
 
     /**
-
+    *   \MSB LDR
+    */
+    #define MSB_LDR 0x03
+    
+    /**
+    *   \LSB LDR
+    */
+    #define LSB_LDR 0x02
+    
+    /**
+    *   \MSB TMP
+    */
+    #define MSB_TMP 0x05
+    
+    /**
+    *   \LSB TMP
+    */
+    #define LSB_TMP 0x04
+    
+    /**
     *   \Control register 1 Address
     */
     #define SLAVE_CTRL_REG1 0x00
