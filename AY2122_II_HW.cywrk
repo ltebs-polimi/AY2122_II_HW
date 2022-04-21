@@ -30,6 +30,7 @@
 <wrkspc_dependency project="GROUP_05.cydsn\GROUP_05.cyprj" dependency="..\..\..\..\Documents\PSoC Creator\AnnotationLibrary\AnnotationLibrary_lib\AnnotationLibrary_lib.cylib\AnnotationLibrary_lib.cyprj" />
 <wrkspc_dependency project="GROUP_06.cydsn\GROUP_06.cyprj" dependency="..\..\..\..\Documents\PSoC Creator\AnnotationLibrary\AnnotationLibrary_lib\AnnotationLibrary_lib.cylib\AnnotationLibrary_lib.cyprj" />
 <wrkspc_dependency project="GROUP_07.cydsn\GROUP_07.cyprj" dependency="..\..\..\..\Documents\PSoC Creator\AnnotationLibrary\AnnotationLibrary_lib\AnnotationLibrary_lib.cylib\AnnotationLibrary_lib.cyprj" />
+<wrkspc_dependency project="GROUP_08.cydsn\GROUP_08.cyprj" dependency="..\..\..\Downloads\PSoC_AnnotationLibrary\AnnotationLibrary\AnnotationLibrary_lib\AnnotationLibrary_lib.cylib\AnnotationLibrary_lib.cyprj" />
 <wrkspc_dependency project="GROUP_08.cydsn\GROUP_08.cyprj" dependency="${CyRoot}\psoc\content\default\CyAnnotationLibrary\CyAnnotationLibrary.cylib\CyAnnotationLibrary.cyprj" />
 <wrkspc_dependency project="GROUP_08.cydsn\GROUP_08.cyprj" dependency="..\..\Support material\PSoC_AnnotationLibrary\AnnotationLibrary\AnnotationLibrary_lib\AnnotationLibrary_lib.cylib\AnnotationLibrary_lib.cyprj" />
 <wrkspc_dependency project="GROUP_09.cydsn\GROUP_09.cyprj" dependency="..\..\..\..\Documents\PSoC Creator\AnnotationLibrary\AnnotationLibrary_lib\AnnotationLibrary_lib.cylib\AnnotationLibrary_lib.cyprj" />
