@@ -12,7 +12,7 @@
 #include "project.h"
 #include "Interrupt_Routines.h"
 
-#define T_AMB 10000 //calcolato un po' troppo brutalmente
+#define T_AMB 10000 
 
 uint8_t slave_buffer[SLAVE_BUFFER_SIZE];
 uint8_t count = 0;
