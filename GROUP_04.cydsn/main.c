@@ -52,8 +52,9 @@ uint8_t timer_period;           //value to set the period of the timer
 uint8_t led_modality;           //value of the led modality
 uint8_t color_channel;          //color combination of the RGB led
 
-int32 PWD_val_LDR;
-int32 PWD_val_TMP;
+int32 PWM_val_LDR;
+int32 PWM_val_TMP;
+int32 cmp_val;
 
 
 /***************************************
@@ -71,9 +72,9 @@ int main(void)
     AMux_Start();
     EZI2C_Start();
     UART_Start();
-    //PWM_LED_R_Start();    
-    //PWM_LED_G_Start();    
-    //PWM_LED_B_Start();
+    PWM_LED_R_Start();    
+    PWM_LED_G_Start();    
+    PWM_LED_B_Start();
     CyDelay(5);
     
     ADC_DelSig_StartConvert(); // start ADC conversion
@@ -110,102 +111,20 @@ int main(void)
         color_channel = slaveBuffer[CTRL_REG1] & 0xE0;
         
         //Write the timer period value to configure the timer to the right frequency
-        //Timer_WritePeriod(timer_period);
         
-        timer_period = Timer_ReadPeriod();
+        timer_period = (3000 / 50 ) / average_samples;
+        
+        Timer_WritePeriod(timer_period);
+        
+              
+        
         
         // PWM_LED_WriteCompare(cmp_val)
         
-        // Standardize the TMP and LDR data between 0 and 1 and mulitiply with PWM's maximum compare value
-        PWD_val_LDR = (average_digit_LDR / 65535) * 20;
-        PWD_val_TMP = (average_digit_TMP / 65535) * 20;
+
         
                 
-        //Switch case to light up the RGB led with the right color combination
-        switch(color_channel){
-            
-            case SLAVE_RED_ON_CTRL_REG1:
-                PWM_LED_G_Stop();
-                PWM_LED_B_Stop();
-                PWM_LED_R_Start(); 
-                //LED_R_Write(ON_R);
-                //LED_G_Write(OFF_G);
-                //LED_B_Write(OFF_B);
-            
-            break;
-            
-            case SLAVE_GREEN_ON_CTRL_REG1:
-                PWM_LED_R_Stop();
-                PWM_LED_B_Stop();    
-                PWM_LED_G_Start(); 
-                //LED_R_Write(OFF_R);
-                //LED_G_Write(ON_G);
-                //LED_B_Write(OFF_B);
-            
-            break;
-                
-            case SLAVE_BLUE_ON_CTRL_REG1:
-                PWM_LED_G_Stop();
-                PWM_LED_R_Stop();    
-                PWM_LED_B_Start();
-                //LED_R_Write(OFF_R);
-                //LED_G_Write(OFF_G);
-                //LED_B_Write(ON_B);
-            
-            break;
-                
-            case SLAVE_RED_GREEN_ON_CTRL_REG1:
-                PWM_LED_B_Stop();
-                PWM_LED_R_Start();    
-                PWM_LED_G_Start(); 
-                //LED_R_Write(ON_R);
-                //LED_G_Write(ON_G);
-                //LED_B_Write(OFF_B);
-            
-            break;
-                
-            case SLAVE_RED_BLUE_ON_CTRL_REG1:
-                PWM_LED_G_Stop();
-                PWM_LED_R_Start();    
-                PWM_LED_B_Start();
-                //LED_R_Write(ON_R);
-                //LED_G_Write(OFF_G);
-                //LED_B_Write(ON_B);
-            
-            break;
-                
-            case SLAVE_GREEN_BLUE_ON_CTRL_REG1:
-                PWM_LED_R_Stop();   
-                PWM_LED_G_Start();    
-                PWM_LED_B_Start();
-                //LED_R_Write(OFF_R);
-                //LED_G_Write(ON_G);
-                //LED_B_Write(ON_B);
-            
-            break;
-                
-            case SLAVE_RED_GREEN_BLUE_ON_CTRL_REG1:                
-                PWM_LED_R_Start();    
-                PWM_LED_G_Start();    
-                PWM_LED_B_Start();
-                //LED_R_Write(ON_R);
-                //LED_G_Write(ON_G);
-                //LED_B_Write(ON_B);
-            
-            break;
-                
-            case SLAVE_RED_GREEN_BLUE_OFF_CTRL_REG1:
-                PWM_LED_R_Stop();
-                PWM_LED_G_Stop();
-                PWM_LED_B_Stop();
-                 
-//                LED_R_Write(OFF_R);
-//                LED_G_Write(OFF_G);
-//                LED_B_Write(OFF_B);
-            
-            break;
-                
-        }
+        
         
         //Switch case to check the values of the status bits and sample the right signal(s)
         switch(status_bits){
@@ -340,7 +259,122 @@ int main(void)
         
             
         }    
+        
+        // MODULATION OF THE LED
+        
+        // Standardize the TMP and LDR data between 0 and 1 and mulitiply with PWM's maximum compare value
+        //PWM_val_TMP = 10 - (average_digit_TMP / 65535) * 20;
+        //average_digit_TMP = 50000;
+        
+        
+        if (average_digit_TMP - 46000 <= 0) {
+            PWM_val_TMP = 20;
+        } else if (average_digit_TMP - 46000 >= 4000) {
+            PWM_val_TMP = 0;
+        } else {
+            PWM_val_TMP = 20 - ((average_digit_TMP - 46000) / 4000.0) * 20;
+        }
+                
+        
+        //sprintf(message, "PWM_val_TMP: %li\r\n", PWM_val_TMP);
+        //UART_PutString(message); 
+        
+        
+        if (average_digit_LDR < 1000) {
+            PWM_val_LDR = 0;
+        } else {
+            PWM_val_LDR = 20;
+        
+        }
+            
+            
+        
+        //Switch case to light up the RGB led with the right color combination
+        
+        switch(led_modality){
+            case SLAVE_LED_LDR:
+                cmp_val = PWM_val_LDR;
+                //cmp_val = 0;
+                break;
+            case SLAVE_LED_TMP:
+                cmp_val = PWM_val_TMP;
+                //cmp_val = 0;
+                break;
+            
+        }
+        
+        switch(color_channel){
+            
+            case SLAVE_RED_ON_CTRL_REG1:
+                PWM_LED_R_WriteCompare(cmp_val);
+                PWM_LED_G_WriteCompare(20);
+                PWM_LED_B_WriteCompare(20);
+            
+            break;
+            
+            case SLAVE_GREEN_ON_CTRL_REG1:
+                PWM_LED_R_WriteCompare(20);
+                PWM_LED_G_WriteCompare(cmp_val);
+                PWM_LED_B_WriteCompare(20);
+            
+            break;
+                
+            case SLAVE_BLUE_ON_CTRL_REG1:
+                PWM_LED_R_WriteCompare(20);
+                PWM_LED_G_WriteCompare(20);
+                PWM_LED_B_WriteCompare(cmp_val);
+                //PWM_LED_G_Stop();
+                //PWM_LED_R_Stop();    
+                //PWM_LED_B_Start();
+                //LED_R_Write(OFF_R);
+                //LED_G_Write(OFF_G);
+                //LED_B_Write(ON_B);
+            
+            break;
+                
+            case SLAVE_RED_GREEN_ON_CTRL_REG1:
+                PWM_LED_R_WriteCompare(cmp_val);
+                PWM_LED_G_WriteCompare(cmp_val);
+                PWM_LED_B_WriteCompare(20);
+            
+            break;
+                
+            case SLAVE_RED_BLUE_ON_CTRL_REG1:
+                PWM_LED_R_WriteCompare(cmp_val);
+                PWM_LED_G_WriteCompare(20);
+                PWM_LED_B_WriteCompare(cmp_val);
+            
+            break;
+                
+            case SLAVE_GREEN_BLUE_ON_CTRL_REG1:
+                PWM_LED_R_WriteCompare(20);
+                PWM_LED_G_WriteCompare(cmp_val);
+                PWM_LED_B_WriteCompare(cmp_val);
+            
+            break;
+                
+            case SLAVE_RED_GREEN_BLUE_ON_CTRL_REG1:                
+                PWM_LED_R_WriteCompare(cmp_val);
+                PWM_LED_G_WriteCompare(cmp_val);
+                PWM_LED_B_WriteCompare(cmp_val);
+            
+            break;
+                
+            case SLAVE_RED_GREEN_BLUE_OFF_CTRL_REG1:
+                PWM_LED_R_WriteCompare(20);
+                PWM_LED_G_WriteCompare(20);
+                PWM_LED_B_WriteCompare(20);
+            
+            break;
+                
+        }
+        
+        
+        
     }
+    
+    
+    
 }
     
 /* [] END OF FILE */

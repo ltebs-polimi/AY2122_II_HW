@@ -96,12 +96,12 @@ file to define values of registers
     /**
     *   \ Change LED modality to use the LDR
     **/
-    //#define SLAVE_LED_LDR 0x00
+    #define SLAVE_LED_LDR 0x00
     
     /**
     *   \ Change LED modality to use the TMP
     **/
-    //#define SLAVE_LED_TMP 0x01
+    #define SLAVE_LED_TMP 0x01
     
  
   
