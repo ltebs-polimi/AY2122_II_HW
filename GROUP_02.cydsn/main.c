@@ -72,10 +72,12 @@ int main(void)
     {
        number_samples = (slaveBuffer[CTRL_REG_1] & 0x3C) >> 3 ;// read and store the number of selected samples
        sensor_status = (slaveBuffer[CTRL_REG_1] & 0x03)      ; // read and store the status value of TMP
-                  
-       switch(sensor_status) {
+       timer_period = 1000
+       Timer_WritePeriod(timer_period);
         
-        case EZI2C_TMP_REG_1 :
+     if (sensor_status == EZI2C_TMP_REG_1) {
+        
+        
             
           slaveBuffer[CTRL_REG_1] = TMP_ON_R;              // cambio il registro di controllo per accendere il led e il controllo proporzionale 
         
@@ -90,10 +92,14 @@ int main(void)
                     
                     slaveBuffer[MSB_TMP] = TMP_sample & FFx0;
                     slaveBuffer[LSB_TMP] = TMP_sample & 0xFF;
+                    
+                    sum_TMP_value = 0;
+                    count = 0;
+                    TMP_sample=0;
                     }
                 
                 PacketReadyFlag = 0;
-               
+                
                 }
         
                 
