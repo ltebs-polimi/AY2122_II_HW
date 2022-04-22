@@ -14,6 +14,8 @@
 <WriteAppMarketingVersionLastSavedWith v="4.4" />
 <CyGuid_dcbd9771-0334-43dc-9cc3-fe99dc3c5316 type_name="CyDesigner.Common.ProjMgmt.Model.CyPrjMgmtWorkspaceSerialize+CyPrjDependencyList" version="4">
 <wrkspc_dependencies>
+<wrkspc_dependency project="GROUP_02.cydsn\GROUP_02.cyprj" dependency="..\..\..\Desktop\Nuova cartella\OneDrive_1_20-4-2022\Assignment\AY2122_II_HW\AdditionalLibrary.cylib\AdditionalLibrary.cyprj" />
+<wrkspc_dependency project="GROUP_02.cydsn\GROUP_02.cyprj" dependency="..\..\..\Desktop\Nuova cartella\LAB SENS\03_Support_Materials-20220420\PSOC\PSoC_AnnotationLibrary\AnnotationLibrary\AnnotationLibrary_lib\AnnotationLibrary_lib.cylib\AnnotationLibrary_lib.cyprj" />
 <wrkspc_dependency project="GROUP_02.cydsn\GROUP_02.cyprj" dependency="..\..\..\AnnotationLibrary\AnnotationLibrary_lib\AnnotationLibrary_lib.cylib\AnnotationLibrary_lib.cyprj" />
 </wrkspc_dependencies>
 </CyGuid_dcbd9771-0334-43dc-9cc3-fe99dc3c5316>
