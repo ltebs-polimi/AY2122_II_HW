@@ -14,9 +14,10 @@
     
     #include "cytypes.h"
     #include "stdio.h"
-    
-    int32 TMP_avg_value_digit ;       // Value in digit of TMP sensor from ADC
-    int32 TMP_avg_value_mV;           // Value in digit of LDR sensor from ADC
+       
+    // Variables declaration - single LDR and TMP measurements expressed in digit
+    int32 value_TMP_code;
+    int32 value_LDR_code;
 
     CY_ISR_PROTO(Custom_ISR_ADC);
     

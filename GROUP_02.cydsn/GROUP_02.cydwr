@@ -251,6 +251,7 @@
   <Data key="DataVersionKey" value="2" />
   <Group key="DWRInstGuidMapping">
     <Group key="Pin">
+      <Data key="2e70252b-e0cf-43ad-9543-fbdfc44846a6" value="Pin_EZI2C" />
       <Data key="6c26a7c3-7f56-42eb-8923-1944c85fb15c" value="Pin_LDR" />
       <Data key="34cfed22-c960-4363-8ecf-2f6fc0d15200" value="Pin_EZI2C" />
       <Data key="77b379dd-ada5-4153-8ee8-566c23fcac38" value="Pin_LED_R" />
@@ -3343,29 +3344,39 @@
     </Group>
   </Group>
   <Group key="Pin2">
-    <Group key="6c26a7c3-7f56-42eb-8923-1944c85fb15c">
-      <Group key="0">
-        <Data key="Port Format" value="2,6" />
-      </Group>
-    </Group>
     <Group key="77b379dd-ada5-4153-8ee8-566c23fcac38">
       <Group key="0">
         <Data key="Port Format" value="2,2" />
       </Group>
     </Group>
-    <Group key="90e8e7db-b208-43f7-b2dd-f44664811134">
-      <Group key="0">
-        <Data key="Port Format" value="2,4" />
+    <Group key="Unlocked Pins">
+      <Group key="6c26a7c3-7f56-42eb-8923-1944c85fb15c">
+        <Group key="0">
+          <Group key="132951820559955377">
+            <Data key="Port Format" value="2,6" />
+          </Group>
+        </Group>
       </Group>
-    </Group>
-    <Group key="6784d0e2-b263-42c5-8aed-c7b012b61a1f">
-      <Group key="0">
-        <Data key="Port Format" value="2,3" />
+      <Group key="90e8e7db-b208-43f7-b2dd-f44664811134">
+        <Group key="0">
+          <Group key="132951820567954734">
+            <Data key="Port Format" value="2,4" />
+          </Group>
+        </Group>
       </Group>
-    </Group>
-    <Group key="77715107-f8d5-47e5-a629-0fb83101ac6b">
-      <Group key="0">
-        <Data key="Port Format" value="2,5" />
+      <Group key="6784d0e2-b263-42c5-8aed-c7b012b61a1f">
+        <Group key="0">
+          <Group key="132951820574679636">
+            <Data key="Port Format" value="2,3" />
+          </Group>
+        </Group>
+      </Group>
+      <Group key="77715107-f8d5-47e5-a629-0fb83101ac6b">
+        <Group key="0">
+          <Group key="132951820590963540">
+            <Data key="Port Format" value="2,5" />
+          </Group>
+        </Group>
       </Group>
     </Group>
   </Group>

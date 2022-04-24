@@ -24,11 +24,12 @@
 
 #define BUFFER_SIZE                 6            // Number of addressed registers inside the Slave Buffer
 #define RW_SIZE                     2            // Number of data bytes starting from the beginning of the buffer with read and write access 
-                                                    // (data bytes located at offset rwBoundary or greater are read only)
-#define WHO_AM_I_DEFAULT_VALUE      0xBC         // Default value to set inside the Who Am I register (HEX = 0xBC, BIN = 10111100) 
+                                                    // (data bytes located at offset rwBoundary or greater are read only) 
 
 // Pointer to the data buffer for I2C communication + Initialization of cells where the measurements will be inserted
-uint8_t slave_pointer_Buffer[BUFFER_SIZE] = {0,EZI2C_WHO_AM_I_DEFAULT_VALUE,0,0,0,0};   
+// uint8_t slave_pointer_Buffer[BUFFER_SIZE] = {0,EZI2C_WHO_AM_I_DEFAULT_VALUE,0,0,0,0};   
+uint8_t slave_pointer_Buffer[BUFFER_SIZE];
+
 
 // Define variable to turn on/off the RGB LED
 #define HIGH              1                // To set logical value high to 1
@@ -37,29 +38,33 @@ uint8_t slave_pointer_Buffer[BUFFER_SIZE] = {0,EZI2C_WHO_AM_I_DEFAULT_VALUE,0,0,
 #define RED_OFF           LOW              // To set Red Channel of RGB LED to 0
 #define GREEN_ON          HIGH             // To set Green Channel of RGB LED to 1
 #define GREEN_OFF         LOW              // To set Green Channel of RGB LED to 0
-#define GREEN_ON          HIGH             // To set Blue Channel of RGB LED to 1
-#define GREEN_OFF         LOW              // To set Blue Channel of RGB LED to 0
-#define TMP_ON_R          0xE4
+#define BLUE_ON           HIGH             // To set Blue Channel of RGB LED to 1
+#define BLUE_OFF          LOW              // To set Blue Channel of RGB LED to 0
+#define TMP_ON_R          0xE4 ///////////////////////////////////////
 
 // Variables declaration
 volatile uint8 PacketReadyFlag = 0;      // Initialize flag to indicate if bytes are to send or not 
 int32 sum_TMP;                           // Summation of binary values sampled from TMP
 int32 sum_LDR;                           // Summation of binary values sampled from LDR
-int32 TMP_value;                         // Averaged values of the X samples considered from TMP (binary)
-int32 LDR_value;                         // Averaged values of the X samples considered from LDR (binary)
-int32 average_mV_TMP;                    // Averaged values of the X samples considered from TMP (mV)
-int32 average_mV_LDR;                    // Averaged values of the X samples considered from LDR (mV)
+int32 average_TMP_code;                  // Averaged values of the X samples considered from TMP (binary)
+int32 average_LDR_code;                  // Averaged values of the X samples considered from LDR (binary)
+int32 average_TMP_mV;                    // Averaged values of the X samples considered from TMP (mV)
+int32 average_LDR_mV;                    // Averaged values of the X samples considered from LDR (mV)
 uint8_t counter = 0;                     // Counter to be incremented in order to keep track of number of samples
 uint8_t LED_modality;                    // LED modality that indicates the sensor that modulates RGB LED intensity
                                             // 0 = LDR readout
                                             // 1 = TMP readout
-uint8_t samples;                         // Number of samples to be used to compute the average
+uint8_t samples = 4;                     // Number of samples to be used to compute the average
+                                            // Initialization choosing number of samples equal to 4
 uint8_t status;                          // bits 0 and 1; status can be set to:
                                             // a. 00 (device stopped)
                                             // b. 01 (to sample LDR channel)
                                             // c. 10 (to sample TMP channel) 
                                             // d. 11 (to sample both channel)
-uint8 timer_period; /////
+uint8 timer_period;                         // Period of transmission 
+int32 clock_frequency = 6000;               // Timer clock frequency
+int32 transmission_datarate = 50;           // Required transmission data rate
+
 
 int main(void)
 {
@@ -67,17 +72,23 @@ int main(void)
 
     //Starting functions
     Timer_Start(); 
-    ADC_DelSig_Start();
-    isr_ADC_StartEx(Custom_isr_ADC); 
-    EZI2C_Start();
+    ADC_DeltaSigma_Start();
+    isr_ADC_StartEx(Custom_ISR_ADC); 
+    EZI2C_Start();    
+    
     AMux_ADC_Start(); 
+    
+    slave_pointer_Buffer[WHO_AM_I] = EZI2C_WHO_AM_I_DEFAULT_VALUE;
+    slave_pointer_Buffer[CTRL_REG_1] = EZI2C_STOP_REG_1;
        
     // Start the ADC conversion
-    ADC_DelSig_StartConvert(); 
-    
-    // Timer period
-    timer_period = 1000/50*samples; /// definire valori!!! 
-    Timer_WritePeriod(timer_period);
+    ADC_DeltaSigma_StartConvert(); 
+        
+    timer_period = clock_frequency/(transmission_datarate*samples);         // Expression to compute the timer period
+    Timer_WritePeriod(timer_period-1);                                      // Writes the period register of the timer                  
+    // Note: The Period minus one is the initial value loaded into the period register. The software can change this register
+    // at any time with the Timer_WritePeriod() API. To get the equivalent result using this API, the Period value from the
+    // customizer, minus one, must be used as the argument in the function. (Datasheet Timer 2.80, pag 5)
     
     // Initialize of EZI2C slave
     // This allows to claim which are the cells that can be used for read and write (R/W) for I2C protocol 
@@ -102,50 +113,141 @@ int main(void)
         LED_modality = (slave_pointer_Buffer[CTRL_REG_1] & 0x04) >> 2;
            
      
-    if (status == EZI2C_STOP_REG_1) {
-       
-        slave_pointer_Buffer[MSB_TMP]  = 0x00;
-        slave_pointer_Buffer[MSB_LDR]  = 0x00;
-        slave_pointer_Buffer[LSB_TMP]  = 0x00;
-        slave_pointer_Buffer[LSB_LDR]  = 0x00;
-    
-    }    
+        if (status == EZI2C_STOP_REG_1) {
+            
+            Pin_LED_R_Write(RED_OFF);
+            Pin_LED_G_Write(GREEN_OFF);
+            Pin_LED_B_Write(BLUE_OFF);
+           
+            slave_pointer_Buffer[MSB_TMP]  = 0x00;
+            slave_pointer_Buffer[MSB_LDR]  = 0x00;
+            slave_pointer_Buffer[LSB_TMP]  = 0x00;
+            slave_pointer_Buffer[LSB_LDR]  = 0x00;
+        
+        }    
 
-    if (status == EZI2C_LDR_REG_1) {
-        
-    
-    }    
-        
-    if (status == EZI2C_TMP_REG_1) {       
-   
-        slave_pointer_Buffer[CTRL_REG_1] = TMP_ON_R;              // cambio il registro di controllo per accendere il led e il controllo proporzionale 
-        // mettere a uno la modalità del led e mettere a 1 tutti i canali del led
-        //E4
+        if (status == EZI2C_LDR_REG_1) {
+            
+           Pin_LED_R_Write(RED_ON);
+           Pin_LED_G_Write(GREEN_OFF);
+           Pin_LED_B_Write(BLUE_OFF);
+            
            if (PacketReadyFlag == 1 ){
             
-              sum_TMP = sum_TMP + average_mV_TMP;
-                
+              sum_LDR += value_LDR_code; 
+                             
               counter++;
                 
                 if (counter == samples){
-                    TMP_value = sum_TMP / samples ;           //faccio la media 
+                    average_LDR_code = sum_LDR / samples; 
                     
-                    slave_pointer_Buffer[MSB_TMP] = TMP_value >> 8; //1111111100000000 
-                    slave_pointer_Buffer[LSB_TMP] = TMP_value & 0xFF; // in binario  11111111 
+                    // Map to mV
+                    average_LDR_mV = ADC_DeltaSigma_CountsTo_mVolts(average_LDR_code);
                     
-                    sum_TMP = 0;
+                    // Save into I2C buffer           
+                    // Right shift in order to memorize the Most Significant Byte (MSB) in the address 0x02 of the I2C Slave Buffer 
+                    slave_pointer_Buffer[MSB_LDR] = average_LDR_mV >> 8;    
+                    // Application of mask 0b11111111 (0xFF in hexadecimal notation) in order to memorize the Least Significant Byte (LSB)
+                    // in the address 0x03 of the I2C Slave Buffer 
+                    slave_pointer_Buffer[LSB_LDR] = average_LDR_mV & 0xFF;
+                    
+                    // Reset counter and variables related to LDR sensor
+                    sum_LDR = 0;
                     counter = 0;
-                    TMP_value=0;
-                    }
+                    average_LDR_code = 0;
+                    average_LDR_mV = 0; // AGGIUNTO IN QUANTO CONSIDERO I mV
+                }
                 
                 PacketReadyFlag = 0;
                 
-                }    
-    }
-    
-    if (status == EZI2C_LDR_TMP_REG_1) {
+            }    
         
-    
-    }     
+        }    
+            
+        if (status == EZI2C_TMP_REG_1) {      
+           
+           Pin_LED_R_Write(RED_ON);
+           Pin_LED_G_Write(GREEN_OFF);
+           Pin_LED_B_Write(BLUE_ON); // GIUSTO PER PROVARE!! 
+       
+            // slave_pointer_Buffer[CTRL_REG_1] = TMP_ON_R;              // cambio il registro di controllo per accendere il led e il controllo proporzionale 
+            // mettere a uno la modalità del led e mettere a 1 tutti i canali del led
+            //E4
+           
+           if (PacketReadyFlag == 1 ){
+            
+              sum_TMP += value_TMP_code; //HO USATO UN'ALTRA NOTAZIONE, che la somma era fatta tra digit e mV
+                             
+              counter++;
+                
+                if (counter == samples){
+                    average_TMP_code = sum_TMP / samples; 
+                    
+                    // Map to mV
+                    average_TMP_mV = ADC_DeltaSigma_CountsTo_mVolts(average_TMP_code);
+                    
+                    // Save into I2C buffer           // TRASFERISCO VALORI IN mV, NON IN DIGIT
+                    // Right shift in order to memorize the Most Significant Byte (MSB) in the address 0x04 of the I2C Slave Buffer 
+                    slave_pointer_Buffer[MSB_TMP] = average_TMP_mV >> 8;    
+                    // Application of mask 0b11111111 (0xFF in hexadecimal notation) in order to memorize the Least Significant Byte (LSB)
+                    // in the address 0x05 of the I2C Slave Buffer 
+                    slave_pointer_Buffer[LSB_TMP] = average_TMP_mV & 0xFF;
+                    
+                    // Reset counter and variables related to TMP sensor
+                    sum_TMP = 0;
+                    counter = 0;
+                    average_TMP_code = 0;
+                    average_TMP_mV = 0; // AGGIUNTO IN QUANTO CONSIDERO I mV
+                }
+                
+                PacketReadyFlag = 0;
+                
+            }    
+        }
+        
+        if (status == EZI2C_LDR_TMP_REG_1) {
+            
+           Pin_LED_G_Write(GREEN_ON); 
+            
+           if (PacketReadyFlag == 1 ){
+            
+              sum_LDR += value_LDR_code; 
+              sum_TMP += value_TMP_code;
+                                
+              counter++;
+                
+                if (counter == samples){
+                    average_LDR_code = sum_LDR / samples; 
+                    average_TMP_code = sum_TMP / samples; 
+                    
+                    // Map to mV
+                    average_LDR_mV = ADC_DeltaSigma_CountsTo_mVolts(average_LDR_code);
+                    average_TMP_mV = ADC_DeltaSigma_CountsTo_mVolts(average_TMP_code);
+                    
+                    // Save into I2C buffer          
+                    // Right shift in order to memorize the Most Significant Byte (MSB) of the LDR and TMP sensors in the corresponding addresses 
+                    slave_pointer_Buffer[MSB_LDR] = average_LDR_mV >> 8;    
+                    slave_pointer_Buffer[MSB_TMP] = average_TMP_mV >> 8;
+                    // Application of mask 0b11111111 (0xFF in hexadecimal notation) in order to memorize the Least Significant Byte (LSB)
+                    // of the LDR and TMP sensors in the corresponding addresses 
+                    slave_pointer_Buffer[LSB_LDR] = average_LDR_mV & 0xFF;
+                    slave_pointer_Buffer[LSB_TMP] = average_TMP_mV & 0xFF;
+                    
+                    // Reset counter and variables related to TMP and LDR sensors
+                    sum_LDR = 0;
+                    sum_TMP = 0;
+                    counter = 0;
+                    average_LDR_code = 0;
+                    average_TMP_code = 0;
+                    average_LDR_mV = 0; 
+                    average_TMP_mV = 0; 
+                }
+                
+                PacketReadyFlag = 0;
+                
+            }  
+        }  
+    }
+}
                 
 /* [] END OF FILE */

@@ -30,7 +30,7 @@
     /**
     *   \brief WHOAMI defaul value
     */
-    #define EZI2C_WHO_AM_I_DEFAULT_VALUE      0xBC 
+    #define EZI2C_WHO_AM_I_DEFAULT_VALUE      0xBC // Default value to set inside the Who Am I register (HEX = 0xBC, BIN = 10111100) 
 
     /**
     *   \status set to 0b00 in Control Register 1 --> to stop the device
