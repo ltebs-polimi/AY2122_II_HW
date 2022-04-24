@@ -11,6 +11,7 @@
 */
 #include "project.h"
 #include "Interrupt_Routines.h"
+#include "Device_Driver.h"
 
 #define T_AMB 10000 
 
@@ -28,24 +29,24 @@ int main(void)
     CyGlobalIntEnable; /* Enable global interrupts. */
     
     //abilito timer
-    Timer_Start();
+    //Timer_Start();
     //abilito interrupt
     isr_ADC_StartEx(Custom_ISR_ADC);
     //abilito lo slave
     EZI2C_Start();
     EZI2C_Enable();
     //abilito comunicazione seriale (da togliere)
-    UART_Start();
+    //UART_Start();
     //abilito PWM
-    PWM_RG_Start();
-    PWM_B_Start();
+    //PWM_RG_Start();
+    //PWM_B_Start();
     
     //set registro who_am_i
     slave_buffer[1] = 0xBC;
     //setto control register inizialmente a 0 con solo average = 1
     slave_buffer[0] = 0x00; 
     
-    EZI2C_SetBuffer1(SLAVE_BUFFER_SIZE, SLAVE_BUFFER_SIZE - 4, slave_buffer);
+    EZI2C_SetBuffer1(SLAVE_BUFFER_SIZE, SLAVE_BUFFER_SIZE - 5, slave_buffer);
 
     for(;;)
     {
@@ -53,9 +54,13 @@ int main(void)
         
         //controllo lo status e del numero di samples
         status = slave_buffer[0] & 0x03;
+        if (status!=0) Device_Start(); 
+        if (status==0) Device_Stop(); 
+        
         samples = ((slave_buffer[0] & 0b00011000)>>3);
         samples = samples + 1; //altrimenti con 00 mi campiona 0 valori e con 11 ne campiona 3
         
+        //Setto il timer in modo da inviare i dati sempre a 50 Hz
         Timer_WritePeriod(samples*255/4);
         
         ////////////////////////////////////////
@@ -64,23 +69,25 @@ int main(void)
         
         //campiono il registro per il led
         red = ((slave_buffer[0] & 0b00100000)>>5);
-        if (red)
-        {
-            sprintf(message, "rosso\r\n\n");
-            UART_PutString(message);
-        }
+        //if (red)
+        //{
+        //    sprintf(message, "rosso\r\n\n");
+        //    UART_PutString(message);
+        //}
+        
         green = ((slave_buffer[0] & 0b01000000)>>6);
-        if (green)
-        {
-            sprintf(message, "verde\r\n\n");
-            UART_PutString(message);
-        }
+        //if (green)
+        //{
+        //    sprintf(message, "verde\r\n\n");
+        //    UART_PutString(message);
+        //}
+        
         blue = ((slave_buffer[0] & 0b10000000)>>7);
-        if (blue)
-        {
-            sprintf(message, "blu\r\n\n");
-            UART_PutString(message);
-        }
+        //if (blue)
+        //{
+        //    sprintf(message, "blu\r\n\n");
+        //    UART_PutString(message);
+        //}
         
         //campiono il registro per il led drive
         led_modality = ((slave_buffer[0] & 0b00000100)>>2);
@@ -95,8 +102,8 @@ int main(void)
             sprintf(message, "valore di temp: %li\r\n\n", ldr);
             UART_PutString(message);
             
-            sprintf(message, "valore di controllo del LED: %d\r\n\n", control);
-            UART_PutString(message);
+            //sprintf(message, "valore di controllo del LED: %d\r\n\n", control);
+            //UART_PutString(message);
         }
         
         else //regolo led con temp
@@ -118,5 +125,7 @@ int main(void)
         
         if (blue == 1)   PWM_B_WriteCompare(control);
         else    PWM_B_WriteCompare(0);
-
+        
+    }
+}
 /* [] END OF FILE */

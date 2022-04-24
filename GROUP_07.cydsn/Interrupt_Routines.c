@@ -28,8 +28,8 @@ CY_ISR(Custom_ISR_ADC)
     //status = 0, spengo tutto
     if (status == 0)
     {
-        ADC_DelSig_PR_Stop();
-        AMux_1_Stop();
+        //ADC_DelSig_PR_Stop();
+        //AMux_1_Stop();
         
         temp = 0;
         ldr = 0;
@@ -43,9 +43,9 @@ CY_ISR(Custom_ISR_ADC)
     if (status == 1)
     {
         //attivo ADC e inizio conversione
-        ADC_DelSig_PR_Start();
-        ADC_DelSig_PR_StartConvert();
-        AMux_1_Start();
+        //ADC_DelSig_PR_Start();
+        //ADC_DelSig_PR_StartConvert();
+        //AMux_1_Start();
         
         //campiono il canale
         AMux_1_FastSelect(LDR_channel);
@@ -65,7 +65,8 @@ CY_ISR(Custom_ISR_ADC)
         ldr = ldr/samples;
         slave_buffer[2] = ldr >> 8;
         slave_buffer[3] = ldr & 0xFF;
-        
+        slave_buffer[4]=0; 
+        slave_buffer[5]=0; 
         sprintf(message, "ldr non in main %ld\r\n\n", ldr);
         UART_PutString(message);
         
@@ -77,9 +78,9 @@ CY_ISR(Custom_ISR_ADC)
     if (status == 2)
     {
         //attivo ADC e inizio conversione
-        ADC_DelSig_PR_Start();
-        ADC_DelSig_PR_StartConvert();
-        AMux_1_Start();
+        //ADC_DelSig_PR_Start();
+        //ADC_DelSig_PR_StartConvert();
+        //AMux_1_Start();
         
         //campiono il canale
         AMux_1_FastSelect(TMP_channel);
@@ -97,7 +98,8 @@ CY_ISR(Custom_ISR_ADC)
         }
         
         temp = temp/samples;
-        
+        slave_buffer[2]=0; 
+        slave_buffer[3]=0; 
         slave_buffer[4] = temp >> 8;
         slave_buffer[5] = temp & 0xFF;
         
@@ -112,9 +114,9 @@ CY_ISR(Custom_ISR_ADC)
     if (status == 3) 
     {
         //attivo ADC e inizio conversione
-        ADC_DelSig_PR_Start();
-        ADC_DelSig_PR_StartConvert();
-        AMux_1_Start();
+        //ADC_DelSig_PR_Start();
+        //ADC_DelSig_PR_StartConvert();
+        //AMux_1_Start();
         
         temp = 0;
         ldr = 0;
