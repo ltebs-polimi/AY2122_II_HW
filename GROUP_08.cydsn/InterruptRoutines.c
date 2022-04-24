@@ -1,64 +1,70 @@
-/* =================================================
- 
-Electronic Technologies and Biosensors Laboratory
-Academic Year 2021/2022 - II Semester
-Assignment
-Alfonzo Massimo, Mazzucchelli Umberto
-
-Interrupt Routines source file
- 
- * =================================================
+/* ========================================
+ *
+ * Copyright YOUR COMPANY, THE YEAR
+ * All Rights Reserved
+ * UNPUBLISHED, LICENSED SOFTWARE.
+ *
+ * CONFIDENTIAL AND PROPRIETARY INFORMATION
+ * WHICH IS THE PROPERTY OF your company.
+ *
+ * ========================================
 */
 #include "InterruptRoutines.h"
 #include "project.h"
 #include "utils.h"
 
 
-extern uint8_t channel;
+
+int32 value_digit;
+int16 TMP_sum; 
+int16 LDR_sum;
+int16 TMP_avg;
+int16 LDR_avg;
 
 
-uint8 SendFlag = 0;
+int channel;
 
-CY_ISR (Custom_ISR_ADC)
+int count=0;
+
+CY_ISR(Custom_ISR_ADC)
 {
     Timer_ReadStatusRegister();
-    if (ReadADC_Flag==1)
+    
+    if(channel == 0 && dataReady==0)//read LDR
     {
-        
-        
-        switch (channel)
-        {
-            case SLAVE_LDR:
-                AMux_FastSelect(LDR_channel);
-                LDR_meas = ADC_DelSig_Read32();
-                if (LDR_meas<0) LDR_meas = 0;
-                if (LDR_meas>65535) LDR_meas = 65535;
-                break;
-                
-            case SLAVE_TMP:
-                AMux_FastSelect(TMP_channel);
-                TMP_meas = ADC_DelSig_Read32();
-                if (TMP_meas<0) TMP_meas = 0;
-                if (TMP_meas>65535) TMP_meas = 65535;
-            break;
-                
-            case SLAVE_BOTH: //Read both channels and save the variable
-                AMux_FastSelect(LDR_channel);
-                LDR_meas = ADC_DelSig_Read32();
-                if (LDR_meas<0) LDR_meas = 0;
-                if (LDR_meas>65535) LDR_meas = 65535;
-                AMux_FastSelect(TMP_channel);
-                TMP_meas = ADC_DelSig_Read32();
-                if (TMP_meas<0) TMP_meas = 0;
-                if (TMP_meas>65535) TMP_meas = 65535;
-            break;
-        }
-        
-        ReadADC_Flag = 0;
-        SendFlag = 1;
+        AMux_FastSelect(channel);
+        ADC_StartConvert();
+        value_digit=ADC_Read32();
+        if(value_digit<0) value_digit=0;
+        if(value_digit>65535) value_digit=65535;
+        LDR_sum += ADC_CountsTo_mVolts(value_digit);
+        ADC_StopConvert();
+        count++;
+        channel = 1;
+    }
+    else if(channel == 1 && dataReady==0)//read TMP
+    {
+        AMux_FastSelect(channel);
+        ADC_StartConvert();
+        value_digit=ADC_Read32();
+        if(value_digit<0) value_digit=0;
+        if(value_digit>65535) value_digit=65535;
+        TMP_sum += ADC_CountsTo_mVolts(value_digit);
+        ADC_StopConvert();
+        count++;
+        channel = 0;
     }
     
+    if(count==(nSamples*2))
+        {
+            TMP_avg = TMP_sum/nSamples;
+            LDR_avg = LDR_sum/nSamples;
+            dataReady=1;
+        }
+        
+    
 }
+
 
 
 /* [] END OF FILE */
