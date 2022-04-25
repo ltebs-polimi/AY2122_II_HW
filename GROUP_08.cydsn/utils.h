@@ -28,16 +28,14 @@
 #define LDR_mod 0
 
 //Constants for sample conversions
-#define TMP_SLOPE 10.0
-#define TMP_INTERCEPT 500.0
+#define TMP_SLOPE                   11.0
+#define TMP_INTERCEPT               552.0
 #define SERIES_RESISTANCE           1000
-#define ACTUAL_Vdd_mV               4702.0
+#define ACTUAL_Vdd_mV               4681.0
 #define TEN_TO_LDR_INTERCEPT        100000 //q = 5 -> pow(10,q) = 100000
 #define LDR_SLOPE                   -0.682
 
-
-
-
+#define tAmb 13000
 
 
 // Brief Start driver
@@ -49,6 +47,6 @@ void RGBLed_Stop(void);
 // Brief Write new color (c) 
 void RGBLed_WriteColor(uint8_t red, uint8_t green, uint8_t blue);
 
-void updateLed(uint8_t modulator,uint8_t red, uint8_t green, uint8_t blue);
+void updateLed(uint8_t modulator,uint16_t rgb_value);
 
 /* [] END OF FILE */
