@@ -28,17 +28,17 @@ CY_ISR_PROTO(Custom_ISR_ADC){
     // Set flag to indicate the bytes are ready to be sent and to be read by the ADC
     PacketReadyFlag = 1;
     
+    
     //********** TMP **********//
     // Read data from ADC buffer
     AMux_ADC_Select(TMP_CH_0);     //Disconnection from all other channels, then connects the given channel (Analog Channel 0)
-    value_LDR_code = ADC_DeltaSigma_Read32();
+    value_TMP_code = ADC_DeltaSigma_Read32();
     
     // Check consistency
     if (value_TMP_code < 0)           value_TMP_code = 0;
     if (value_TMP_code > 65535)       value_TMP_code = 65535;
     
-    
-    
+
     //********** LDR **********//
     // Read data from ADC buffer
     AMux_ADC_Select(LDR_CH_1);    //Disconnection from all other channels, then connects the given channel (Analog Channel 1)

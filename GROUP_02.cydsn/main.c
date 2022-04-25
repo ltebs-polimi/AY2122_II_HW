@@ -36,7 +36,7 @@ uint8_t slave_pointer_Buffer[BUFFER_SIZE] = {0};
 #define LDR_readout       0                // To use in order to control the LED intensity using the LDR 
 #define TMP_readout       1                // To use in order to control the LED intensity using the TMP
                                                // (see also definition above of "uint8_t LED_modality")
-#define LED_CHECK_DELAY 1000               //Blink delay in ms of LED CHECK, which is used to visually verify that 
+#define LED_CHECK_DELAY 600               //Blink delay in ms of LED CHECK, which is used to visually verify that 
                                            //an active channel is controlling the LED
 
 // Variables declaration
@@ -67,13 +67,24 @@ int32 clock_frequency = 6000;               // Timer clock frequency
                                                   // By choosing a value equal to 6000 Hz we avoid to have a problem of overloading
                                                   // derived from the division computed for obtaining the timer period, beacuse 6000 Hz
                                                   // divided by transmission_datarate*samples (for samples from 1 to 4) is always an integer
-int32 transmission_datarate = 50;           // Required transmission data rate// questa variabile dove la utilizziamo?
+int32 transmission_datarate = 50;           // Required transmission data rate
 
-// PWM
-uint16_t PWM_compare = 127;     //SISTEMARE COMMENTO!!!// Compare of the PWM 
-                                // Initialization of PWM to 50% (set to 127 since since PWM works at 8 bit)
-//uint8_t PWM_period;            // Period of the PWM   
-                                 
+u_int16_t compareValueLDR = 50;     // PWM initialization to 50%; 16 bit PWM in order to insert 16 bit values of average data realted to LDR
+u_int16_t compareValueTMP = 50;     // PWM initialization to 50%; 16 bit PWM in order to insert 16 bit values of average data realted to TMP
+u_int16_t periodValuePWM= 100;
+
+
+// PWM settings
+u_int16_t MAX_Value_LDR=0xD7D3;  // It corresponds to the minimum brightness value which can be measured:  with LDR sensors at 10 lux it is equal to 72,6 kohm (if the ADC
+// is set with a dynamic range from 0V to 5V and gain = 1); Rpd (pull down resistor) = 10kohm, 
+// DA SISTEMARE!!!! 
+//corrisponde al minimo valore di luminosità misurabile: con RLDR a 10 lux pari a 72,6kohm, ADC con dinamica da 0V a 5V e guadagno 1; Rpd=10kohm, a 0,1 lux abbiamo 4,973V corrispondente ad un codice 0xFE9A 
+                         // lo usiamo come periodo dei PWM
+u_int16_t MAX_Value_TMP=0x5999; // corrisponde al codice massimo corrispondente alla temperatura più alta misurabili con il TMP (125°C) con stesse impostazioni ADC di LDR. A 125°C Vtmp=1750mV a cui corrisponde un codice HEX 0x5999 
+//Start PWM   -----forse va fatto partire all'interno degli IF
+//PWM_LED_Start(); //start PWM
+
+
 int main(void)
 {
     CyGlobalIntEnable; /* Enable global interrupts. */
@@ -82,8 +93,7 @@ int main(void)
     Timer_Start(); 
     ADC_DeltaSigma_Start();
     isr_ADC_StartEx(Custom_ISR_ADC); 
-    EZI2C_Start();
-    PWM_LED_Start(); 
+    EZI2C_Start();    
     
     AMux_ADC_Start(); 
 
@@ -100,17 +110,7 @@ int main(void)
     // Note: The Period minus one is the initial value loaded into the period register. The software can change this register
     // at any time with the Timer_WritePeriod() API. To get the equivalent result using this API, the Period value from the
     // customizer, minus one, must be used as the argument in the function. (Datasheet Timer 2.80, pag 5)
-    
-    /* DA CODICE PROF!!!
-    // Set up variables for PWM component
-    PWM_compare  = PWM_LED_ReadCompare();
-    PWM_period  = PWM_LED_ReadPeriod();
-    
-    // Set up Slave Buffer
-    slaveBuffer[0] = PWM_compare;
-    slaveBuffer[1] = PWM_period; */
-    
-        
+       
     for(;;)
     {
         
@@ -134,12 +134,11 @@ int main(void)
     
         if (status == EZI2C_STOP_REG_1) {
             
-            // By setting one pin of each AND port to 0, all the channels of the RGB led will be off
-            Pin_REG_B_Write(LOW);
-            Pin_REG_G_Write(LOW);
-            Pin_REG_R_Write(LOW);
-            
-           
+            LED_CHECK_Write(LOW);
+                                    
+            PWM_B_Stop();
+            PWM_G_Stop();
+            PWM_R_Stop();
            
             slave_pointer_Buffer[MSB_TMP]  = 0x00;
             slave_pointer_Buffer[MSB_LDR]  = 0x00;
@@ -149,8 +148,6 @@ int main(void)
         }    
 
         else if (status == EZI2C_LDR_REG_1) {
-            
-       
             
            if (PacketReadyFlag == 1 ){
             
@@ -174,28 +171,38 @@ int main(void)
                     // Control of LED using PWM
                     if(LED_modality==TMP_readout){
                         
-                       // Pin_REG_B_Write(LOW);
-                       // Pin_REG_G_Write(LOW);
-                        Pin_REG_R_Write(LOW);
-                        
-                        PWM_LED_WriteCompare(average_LDR_code);
-                        CyDelay(10);
-                        
-                        
-                       
                         // Use of internal LED to say to the user he/she is trying to control the LED using an inactive channel 
                         LED_CHECK_Write(!LED_CHECK_Read());
                         CyDelay(LED_CHECK_DELAY);// Add delay
+                        
+                        compareValueTMP = average_TMP_code;
+                        PWM_B_WritePeriod(MAX_Value_TMP);
+                        PWM_B_WriteCompare(compareValueTMP);
+                        PWM_G_WritePeriod(MAX_Value_TMP);
+                        PWM_G_WriteCompare(compareValueTMP);
+                        PWM_R_WritePeriod(MAX_Value_TMP);
+                        PWM_R_WriteCompare(compareValueTMP);
+                        PWM_B_Start();
+                        PWM_G_Start();
+                        PWM_R_Start();
+                 
                                 
                     }
                     else if (LED_modality==LDR_readout){
                         
-                       // Pin_REG_B_Write(HIGH);
-                        //Pin_REG_G_Write(LOW);
-                        Pin_REG_R_Write(HIGH);
+                        LED_CHECK_Write(LOW);
+                                                
+                        compareValueLDR = average_LDR_code;
+                        PWM_B_WritePeriod(MAX_Value_LDR);
+                        PWM_B_WriteCompare(MAX_Value_LDR-compareValueLDR);
+                        PWM_G_WritePeriod(MAX_Value_LDR);
+                        PWM_G_WriteCompare(MAX_Value_LDR-compareValueLDR);
+                        PWM_R_WritePeriod(MAX_Value_LDR);
+                        PWM_R_WriteCompare(MAX_Value_LDR-compareValueLDR);
+                        PWM_B_Start();
+                        PWM_G_Start();
+                        PWM_R_Start();
                         
-                        PWM_LED_WriteCompare(average_LDR_code);
-                        CyDelay(10);
                     }
                         
                     // Reset counter and variables related to LDR sensor
@@ -203,6 +210,10 @@ int main(void)
                     counter = 0;
                     average_LDR_code = 0;
                     average_LDR_mV = 0;
+                    // bisogna inserire PWM_Stop()???
+                    // se esco da questo IF i LED devono in ogni caso lampeggiare anche se si entra nell'IF dell'altro sensore
+                    //quindi non devo azzerare i compareValueLDR e MAXValueLDR ??
+                    // ma devono lampeggiare anche se PacketReadyFlag è 0??
                 }
                 
                 PacketReadyFlag = 0;
@@ -211,10 +222,7 @@ int main(void)
         
         }    
             
-        else if (status == EZI2C_TMP_REG_1) {      
-           
-          
-           
+        else if (status == EZI2C_TMP_REG_1) {           
         
            if (PacketReadyFlag == 1 ){
             
@@ -240,23 +248,46 @@ int main(void)
                     
                     // Control of LED using PWM
                     if(LED_modality==LDR_readout){
- 
-                      //  Pin_REG_B_Write(LOW);
-                      //  Pin_REG_G_Write(LOW);
-                        Pin_REG_R_Write(LOW);
                         
-                     
-                       
                         // Use of internal LED to say to the user he/she is trying to control the LED using the switched-off channel 
                         LED_CHECK_Write(!LED_CHECK_Read());
                         CyDelay(LED_CHECK_DELAY);// Add delay
+                        
+                        PWM_B_Stop(); // è proprio necessario fermarlo???
+                        PWM_G_Stop(); // è proprio necessario fermarlo???
+                        PWM_R_Stop(); // è proprio necessario fermarlo???
+                        compareValueLDR = average_LDR_code;
+                        PWM_B_WritePeriod(MAX_Value_LDR);
+                        PWM_B_WriteCompare(MAX_Value_LDR-compareValueLDR);
+                        PWM_G_WritePeriod(MAX_Value_LDR);
+                        PWM_G_WriteCompare(MAX_Value_LDR-compareValueLDR);
+                        PWM_R_WritePeriod(MAX_Value_LDR);
+                        PWM_R_WriteCompare(MAX_Value_LDR-compareValueLDR);
+                        PWM_B_Start();
+                        PWM_G_Start();
+                        PWM_R_Start();
+                      
+
                                 
                     }
                     else if (LED_modality==TMP_readout){
                         
-                       // Pin_REG_B_Write(HIGH);
-                       // Pin_REG_G_Write(HIGH);
-                        Pin_REG_R_Write(LOW); 
+                        LED_CHECK_Write(LOW);
+                        
+                        PWM_B_Stop(); // è proprio necessario fermarlo???
+                        PWM_G_Stop(); // è proprio necessario fermarlo???
+                        PWM_R_Stop(); // è proprio necessario fermarlo???
+                        compareValueTMP = average_TMP_code;
+                        PWM_B_WritePeriod(MAX_Value_TMP);
+                        PWM_B_WriteCompare(compareValueTMP);
+                        PWM_G_WritePeriod(MAX_Value_TMP);
+                        PWM_G_WriteCompare(compareValueTMP);
+                        PWM_R_WritePeriod(MAX_Value_TMP);
+                        PWM_R_WriteCompare(compareValueTMP);
+                        PWM_B_Start();
+                        PWM_G_Start();
+                        PWM_R_Start();
+                        
                     }
                     
                     // Reset counter and variables related to TMP sensor
@@ -264,6 +295,7 @@ int main(void)
                     counter = 0;
                     average_TMP_code = 0;
                     average_TMP_mV = 0; 
+                    // vedi commenti precedenti
                 }
                 
                 PacketReadyFlag = 0;
@@ -272,9 +304,8 @@ int main(void)
         }
         
        else if (status == EZI2C_LDR_TMP_REG_1) {
-          
-        //
-            
+           
+           
            if (PacketReadyFlag == 1 ){
             
               sum_LDR += value_LDR_code; 
@@ -294,7 +325,6 @@ int main(void)
                     // Right shift in order to memorize the Most Significant Byte (MSB) of the LDR and TMP sensors in the corresponding addresses 
                     slave_pointer_Buffer[MSB_LDR] = average_LDR_mV >> 8;    
                     slave_pointer_Buffer[MSB_TMP] = average_TMP_mV >> 8;
-                 
                     // Application of mask 0b11111111 (0xFF in hexadecimal notation) in order to memorize the Least Significant Byte (LSB)
                     // of the LDR and TMP sensors in the corresponding addresses 
                     slave_pointer_Buffer[LSB_LDR] = average_LDR_mV & 0xFF;
@@ -302,18 +332,37 @@ int main(void)
                     
                     // Control of LED using PWM
                     if(LED_modality==TMP_readout){
-                        
-                        //Pin_REG_B_Write(HIGH);
-                       // Pin_REG_G_Write(LOW);
-                        Pin_REG_R_Write(HIGH);                                 
+                        PWM_B_Stop(); // è proprio necessario fermarlo???
+                        PWM_G_Stop(); // è proprio necessario fermarlo???
+                        PWM_R_Stop(); // è proprio necessario fermarlo???
+                        compareValueTMP = average_TMP_code;
+                        PWM_B_WritePeriod(MAX_Value_TMP);
+                        PWM_B_WriteCompare(compareValueTMP);
+                        PWM_G_WritePeriod(MAX_Value_TMP);
+                        PWM_G_WriteCompare(compareValueTMP);
+                        PWM_R_WritePeriod(MAX_Value_TMP);
+                        PWM_R_WriteCompare(compareValueTMP);
+                        PWM_B_Start();
+                        PWM_G_Start();
+                        PWM_R_Start();
+                                
                     }
                     else if (LED_modality==LDR_readout){
-                        
-                       // Pin_REG_B_Write(LOW);
-                        //Pin_REG_G_Write(LOW);
-                        Pin_REG_R_Write(HIGH);   
-
-                    }
+                        PWM_B_Stop(); // è proprio necessario fermarlo???
+                        PWM_G_Stop(); // è proprio necessario fermarlo???
+                        PWM_R_Stop(); // è proprio necessario fermarlo???
+                        compareValueLDR = average_LDR_code;
+                        PWM_B_WritePeriod(MAX_Value_LDR);
+                        PWM_B_WriteCompare(MAX_Value_LDR-compareValueLDR);
+                        PWM_G_WritePeriod(MAX_Value_LDR);
+                        PWM_G_WriteCompare(MAX_Value_LDR-compareValueLDR);
+                        PWM_R_WritePeriod(MAX_Value_LDR);
+                        PWM_R_WriteCompare(MAX_Value_LDR-compareValueLDR);
+                        PWM_B_Start();
+                        PWM_G_Start();
+                        PWM_R_Start();
+ 
+                        }
                     
                     // Reset counter and variables related to TMP and LDR sensors
                     sum_LDR = 0;
