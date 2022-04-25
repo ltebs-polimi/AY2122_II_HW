@@ -30,6 +30,8 @@
     
     int16 TMP_avg,LDR_avg,LDR_sum,TMP_sum;
     
+    int32 TMP_avg_digit, LDR_avg_digit,TMP_sum_digit,LDR_sum_digit;
+    
     int dataReady; //variabile flag
     
 #endif 

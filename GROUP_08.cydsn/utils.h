@@ -9,6 +9,8 @@
  *
  * ========================================
 */
+#include "project.h"
+
 #define WHO_AM_I_Def 0xBC
 #define CTRL_REG 0x00
 #define WHO_AM_I 0x01
@@ -22,6 +24,8 @@
 #define readBoth 3
 #define readNone 0
 
+#define TMP_mod 1
+#define LDR_mod 0
 
 //Constants for sample conversions
 #define TMP_SLOPE 10.0
@@ -30,4 +34,21 @@
 #define ACTUAL_Vdd_mV               4702.0
 #define TEN_TO_LDR_INTERCEPT        100000 //q = 5 -> pow(10,q) = 100000
 #define LDR_SLOPE                   -0.682
+
+
+
+
+
+
+// Brief Start driver
+void RGBLed_Start(void);
+
+// Stop 
+void RGBLed_Stop(void);       
+
+// Brief Write new color (c) 
+void RGBLed_WriteColor(uint8_t red, uint8_t green, uint8_t blue);
+
+void updateLed(uint8_t modulator,uint8_t red, uint8_t green, uint8_t blue);
+
 /* [] END OF FILE */

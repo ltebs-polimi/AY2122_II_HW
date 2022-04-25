@@ -21,6 +21,10 @@ int16 LDR_sum;
 int16 TMP_avg;
 int16 LDR_avg;
 
+int32 LDR_avg_digit;
+int32 TMP_avg_digit;
+int32 TMP_sum_digit; 
+int32 LDR_sum_digit;
 
 int channel;
 
@@ -37,6 +41,7 @@ CY_ISR(Custom_ISR_ADC)
         value_digit=ADC_Read32();
         if(value_digit<0) value_digit=0;
         if(value_digit>65535) value_digit=65535;
+        LDR_sum_digit += value_digit;
         LDR_sum += ADC_CountsTo_mVolts(value_digit);
         ADC_StopConvert();
         count++;
@@ -49,6 +54,7 @@ CY_ISR(Custom_ISR_ADC)
         value_digit=ADC_Read32();
         if(value_digit<0) value_digit=0;
         if(value_digit>65535) value_digit=65535;
+        TMP_sum_digit += value_digit;
         TMP_sum += ADC_CountsTo_mVolts(value_digit);
         ADC_StopConvert();
         count++;
@@ -57,6 +63,8 @@ CY_ISR(Custom_ISR_ADC)
     
     if(count==(nSamples*2))
         {
+            TMP_avg_digit = TMP_sum_digit/nSamples;
+            LDR_avg_digit = LDR_sum_digit/nSamples;
             TMP_avg = TMP_sum/nSamples;
             LDR_avg = LDR_sum/nSamples;
             dataReady=1;
