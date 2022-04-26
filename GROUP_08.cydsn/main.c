@@ -15,14 +15,14 @@
 #include "utils.h"
 #include "math.h"
 
-char DataBuffer[16];
 
 uint8_t nSamples;
 uint8_t modulator;
 
 uint8_t slaveBuffer[SLAVE_BUFFER_SIZE]={0,WHO_AM_I_Def,0,0,0,0};
 
-
+char defaultPeriod;
+char newSamples;
 int16 LDR_avg_scaled, TMP_avg_scaled,rgb_TMP,rgb_LDR;
 
 
@@ -58,7 +58,8 @@ int main(void)
     PWM_B_Start();
 
     
-    nSamples = ((slaveBuffer[CTRL_REG] & 0b00011000)>>3)+1;
+    newSamples = 1;
+    defaultPeriod = Timer_ReadPeriod();
     TMP_avg=0;
     LDR_avg=0;
     TMP_sum=0;
@@ -71,12 +72,11 @@ int main(void)
     
     channel = 0;
     double LDR;
-    
-    slaveBuffer[CTRL_REG] = 0b00000110;
+    nSamples=1;
     
     for(;;)
     {
-        nSamples = ((slaveBuffer[CTRL_REG] & 0b00011000)>>3)+1;
+        newSamples = ((slaveBuffer[CTRL_REG] & 0b00011000)>>3)+1;
         readMode = slaveBuffer[CTRL_REG] & 0b00000011;
         modulator = (slaveBuffer[CTRL_REG] & 0b00000100) >> 2;
         /*
@@ -100,6 +100,12 @@ int main(void)
         } 
         */
         if(readMode != readNone) RGBLed_Start();
+        
+        if(newSamples!= nSamples) 
+        {
+            updateTimer(newSamples,defaultPeriod);
+            nSamples = newSamples;
+        }
         
         if(readMode != currMode) //clean all the variables when the status changes
         {
@@ -162,8 +168,7 @@ int main(void)
                     slaveBuffer[MSB_TMP] = 0x00;
                     slaveBuffer[LSB_TMP] = 0x00;
                     rgb_LDR = slaveBuffer[MSB_LDR];
-                    sprintf(DataBuffer, "\n%ld", LDR_avg_digit);
-                    UART_PutString(DataBuffer);
+                    
                     
                     updateLed(LDR_mod,LDR_avg_digit);
                     LDR_sum_digit=0;
@@ -183,8 +188,7 @@ int main(void)
                     slaveBuffer[LSB_LDR] = 0x00;
                     slaveBuffer[MSB_TMP] = TMP_avg_scaled >> 8;
                     slaveBuffer[LSB_TMP] = TMP_avg_scaled & 0xFF;
-                    sprintf(DataBuffer, "\n%ld", TMP_avg_digit);
-                    UART_PutString(DataBuffer);
+                    
                     
                     TMP_sum_digit=0;
                     TMP_sum=0;

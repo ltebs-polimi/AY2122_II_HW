@@ -17,6 +17,7 @@ static void RGBLed_WriteGreen(uint8_t green);
 static void RGBLed_WriteBlue(uint8_t blue);
 
 char value;
+char newPeriod;
 
 void updateLed(uint8_t modulator,uint16_t rgb_value)
 {   
@@ -99,4 +100,13 @@ static void RGBLed_WriteBlue(uint8_t blue)
 {
     PWM_B_WriteCompare(blue);
 }
+
+void updateTimer(char samples,char defaultPeriod)
+{
+    Timer_Stop();
+    newPeriod = defaultPeriod/samples;
+    Timer_WritePeriod(newPeriod);
+    Timer_Start();
+}
+
 /* [] END OF FILE */
