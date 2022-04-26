@@ -1,15 +1,21 @@
-/**
-* \brief Main source file for the assignement.
-*
-*
-* \authors Group 1
-* \date April 14, 2022
-*/
+/* =====================================================
+ *
+ * ELECTRONIC TECHNOLOGIES AND BIOSENSORS LABORATORY
+ * Academic year 2021/22, II Semester
+ * Assignment 1
 
+ * Authors: Group 1
+ *
+ * ----------------------- MAIN ------------------------
+ * Main source file for the assignement.
+ * -----------------------------------------------------
+ * 
+ * =====================================================
+*/
 
 #include "project.h"
 #include "InterruptRoutines.h"
-#include "RGB_led_driver.h"
+#include "RGB_Led_driver.h"
 
 
 #define SLAVE_BUFFER_SIZE 6 ///< Size of the buffer of the I2C slave

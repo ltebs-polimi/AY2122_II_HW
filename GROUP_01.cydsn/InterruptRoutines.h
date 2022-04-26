@@ -1,12 +1,17 @@
-/*
-*
-* \brief Header file for interrupt routines
-*
-* This header files contains the function declarations
-* for the interrupt services routines.
-*
-* \author Group 1
-* \date April 14, 2022
+/* =====================================================
+ *
+ * ELECTRONIC TECHNOLOGIES AND BIOSENSORS LABORATORY
+ * Academic year 2021/22, II Semester
+ * Assignment 1
+
+ * Authors: Group 1
+ *
+ * ----------- INTERROUPT ROUTINE (header) -------------
+ * This header files contains the function declarations
+ * for the interrupt services routines.
+ * -----------------------------------------------------
+ * 
+ * =====================================================
 */
 
 #ifndef __INTERRUPT_ROUTINES_H

@@ -1,6 +1,17 @@
-/**
-* This file contains all the source code required
-* for the interrupt service routines.
+/* =====================================================
+ *
+ * ELECTRONIC TECHNOLOGIES AND BIOSENSORS LABORATORY
+ * Academic year 2021/22, II Semester
+ * Assignment 1
+
+ * Authors: Group 1
+ *
+ * ----------- INTERROUPT ROUTINE (source) -------------
+ * This file contains all the source code required
+ * for the interrupt service routines.
+ * -----------------------------------------------------
+ * 
+ * =====================================================
 */
 
 // Include required header files
@@ -31,12 +42,21 @@ CY_ISR(Custom_Timer_50Hz_ISR)
     
     if(flag_send == 1)
     {
-        // slaveBuffer is updated with the new mean values
-        slaveBuffer[2] = light_lux >> 8;
-        slaveBuffer[3] = light_lux & 0xFF;
-        slaveBuffer[4] = temp_celsius >> 8;
-        slaveBuffer[5] = temp_celsius & 0xFF;
-
+        if(temp_celsius > 255 || light_lux > 255) {
+            if(temp_celsius > 255) {
+                slaveBuffer[5] = temp_celsius & 0xFF;
+                slaveBuffer[4] = temp_celsius >> 8;
+            }
+            if(light_lux > 255) {
+                slaveBuffer[3] = light_lux & 0xFF;
+                slaveBuffer[2] = light_lux >> 8;
+            }  
+        } else {
+        slaveBuffer[2] = 0x00;
+        slaveBuffer[3] = light_lux;
+        slaveBuffer[4] = 0x00;
+        slaveBuffer[5] = temp_celsius;
+        }
         
         flag_send = 0;
         
@@ -93,6 +113,12 @@ CY_ISR(Custom_Timer_ADC_ISR)
 
     switch(sampling_status) ///< Switch case based on the required sampling status
     {
+        case 0x00:
+            ADC_DelSig_StopConvert();
+            AMux_DisconnectAll();
+        break;
+        
+    
         case 0x01: ///< Temperature readout
             
             AMux_FastSelect(TMP_CH);
