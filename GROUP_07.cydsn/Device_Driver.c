@@ -16,7 +16,6 @@ void Device_Start(){
     ADC_DelSig_PR_Start(); 
     AMux_1_Start(); 
     ADC_DelSig_PR_StartConvert(); 
-    UART_Start(); 
     Timer_Start(); 
     PWM_RG_Start(); 
     PWM_B_Start(); 
@@ -24,8 +23,7 @@ void Device_Start(){
 
 void Device_Stop(){
     ADC_DelSig_PR_Stop(); 
-    AMux_1_Stop();
-    UART_Stop(); 
+    AMux_1_Stop(); 
     PWM_RG_Stop(); 
     PWM_B_Stop(); 
 
