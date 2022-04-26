@@ -1,0 +1,41 @@
+; We set the default value of 5 samples and 50 Hz of transmission rate (we have a clock of 5kHz and a period of 20)
+; The user is free to change the desired value from almost 2 up
+; to almost 10 samples modifying the bit devoted to that configuration. The transmission rate can be modified too, and it can vary
+; almost between 10 Hz and 100 Hz.
+; (please just the two lines 'w 08 00 17 p' and 'w 08 01 14 p' are supposed to be modified in order to match your needs. The first eight 
+; lines are supposed to be repeated in order to visualize the data collected on a chart):
+
+; in particular the user could be interested in changing the third number of this last line (i.e. 17 in hex) that codifies both the
+; number of sample and the function modality (which sensor we want to read). It is codified by 8 bits:
+; -bit 7 - (not read by the program)
+; -bit 6 - (not read by the program)
+; -bits 5:2 number of samples (4 bits necessary to codify the number of samples in binary, i.e. 0101 codifies 5 samples)
+; -bits 1:0 modality (00 shut down of the communication; 01 only temperature sensor on; 10 only light sensor on; 11 both sensors on)
+; in this case 0x17 corresponds to 00010111 --> 00-0101(5 samples in decimal)-11(both sensors on)
+; another example could be 0x16 that corresponds to 00010110 --> 00-0101(5 samples in decimal)-10(just the light sensor on)
+
+; REMEMBER: if the user wants to change the number of samples, in order to obtain a desired 'F' trasmission rate,
+; the timer period value has to be changed as well according to this formula:
+
+; new_period_value = 5000/(F*new_sample_number); --- 5000Hz is our f_clock
+
+; i.e new_sample_number=4;  F_desired = 25 Hz ---> new_period_value=5000/(25*4)=50;
+
+;the new_period_value must be an integer number and it should be inserted in the register_2 by running the following line:
+;w 08 01 xx p
+;where xx is the .hex value of the new period. 'F' can vary almost from 10 Hz to 100 Hz.
+
+;w 08 01 14 p
+;as mentioned above we set the default value of the period to 0x14 (20 in decimal) in order to match our needs of having a 
+;transmission rate of 50 Hz by computing the avarage of 5 different samples.
+
+w 08 00 03 p
+
+w 08 02 p 
+r 08 @1LDR p
+w 08 03 p 
+r 08 @0LDR p
+w 08 04 p 
+r 08 @1TMP p 
+w 08 05 p 
+r 08 @0TMP p 

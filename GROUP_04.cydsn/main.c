@@ -74,7 +74,8 @@ int main(void)
     //Set EZI2C buffer
     //SLAVE_BUFFER_SIZE - 5 is the second position (boundary of r/w cells)
     EZI2C_SetBuffer1(SLAVE_BUFFER_SIZE, SLAVE_BUFFER_SIZE - 5, slaveBuffer);
-
+    
+    char message[50];
     
     for (;;)
     {
@@ -94,7 +95,7 @@ int main(void)
         //3000Hz is the clock frequency and 50Hz is the required transmission data rate
         timer_period = (3000/50) / nb_average_samples;
         Timer_WritePeriod(timer_period);
-       
+        
         
         //Switch case to check the value of the status bits and sample the right sensor(s)
         switch(status_bits)
@@ -110,16 +111,20 @@ int main(void)
                     nb_samples++;           //Increment nb of samples read
                     
                     if (nb_samples == nb_average_samples)   //Check if the number of samples already done corresponds to the asked nb of samples
-                    {     
+                    {    
+                        
+                        sprintf(message, "LDR: %ld, TMP: %ld \r\n", average_LDR, average_TMP);
+                        UART_PutString(message);
+                        
                         //Compute the averages
                         average_LDR = sum_LDR / nb_average_samples;
                         average_TMP = sum_TMP / nb_average_samples;
                         
                         //Write in the buffer
-                        slaveBuffer[MSB_LDR]= average_LDR >> 8;      //Write in the 3rd register the MSB of the LDR sensor average
-                        slaveBuffer[LSB_LDR]= average_LDR & 0xFF;    //Write in the 4th register the LSB of the LDR sensor average
-                        slaveBuffer[MSB_TMP]= average_TMP >> 8;      //Write in the 5th register the MSB of the TMP sensor average
-                        slaveBuffer[LSB_TMP]= average_TMP & 0xFF;    //Write in the 6th register the LSB of the TMP sensor average
+                        slaveBuffer[MSB_LDR] = average_LDR >> 8;      //Write in the 3rd register the MSB of the LDR sensor average
+                        slaveBuffer[LSB_LDR] = average_LDR & 0xFF;    //Write in the 4th register the LSB of the LDR sensor average
+                        slaveBuffer[MSB_TMP] = average_TMP >> 8;      //Write in the 5th register the MSB of the TMP sensor average
+                        slaveBuffer[LSB_TMP] = average_TMP & 0xFF;    //Write in the 6th register the LSB of the TMP sensor average
                         
                         //Reset sum and nb of samples counter
                         sum_LDR = 0;
@@ -147,10 +152,10 @@ int main(void)
                         average_TMP = sum_TMP / nb_average_samples;
                         
                         //Write in the buffer
-                        slaveBuffer[MSB_LDR]= 0x00;                  //Write 0 in the 3rd register (no LDR sampling)
-                        slaveBuffer[LSB_LDR]= 0x00;                  //Write 0 in the 4th register (no LDR sampling)
-                        slaveBuffer[MSB_TMP]= average_TMP >> 8;      //Write in the 5th register the MSB of the TMP sensor average
-                        slaveBuffer[LSB_TMP]= average_TMP & 0xFF;    //Write in the 6th register the LSB of the TMP sensor average
+                        slaveBuffer[MSB_LDR] = 0x00;                  //Write 0 in the 3rd register (no LDR sampling)
+                        slaveBuffer[LSB_LDR] = 0x00;                  //Write 0 in the 4th register (no LDR sampling)
+                        slaveBuffer[MSB_TMP] = average_TMP >> 8;      //Write in the 5th register the MSB of the TMP sensor average
+                        slaveBuffer[LSB_TMP] = average_TMP & 0xFF;    //Write in the 6th register the LSB of the TMP sensor average
                     
                         //Reset sum and nb of samples counter
                         sum_TMP = 0;
@@ -177,10 +182,10 @@ int main(void)
                         average_LDR = sum_LDR / nb_average_samples;
                                  
                         //Write in the buffer
-                        slaveBuffer[MSB_LDR]= average_LDR >> 8;      //Write in the 3rd register the MSB of the LDR sensor average
-                        slaveBuffer[LSB_LDR]= average_LDR & 0xFF;    //Write in the 4th register the LSB of the LDR sensor average
-                        slaveBuffer[MSB_TMP]= 0x00;                  //Write 0 in the 5th register (no TMP sampling)
-                        slaveBuffer[LSB_TMP]= 0x00;                  //Write 0 in the 6th register (no TMP sampling)
+                        slaveBuffer[MSB_LDR] = average_LDR >> 8;      //Write in the 3rd register the MSB of the LDR sensor average
+                        slaveBuffer[LSB_LDR] = average_LDR & 0xFF;    //Write in the 4th register the LSB of the LDR sensor average
+                        slaveBuffer[MSB_TMP] = 0x00;                  //Write 0 in the 5th register (no TMP sampling)
+                        slaveBuffer[LSB_TMP] = 0x00;                  //Write 0 in the 6th register (no TMP sampling)
                         
                         //Reset sum and nb of samples counter
                         sum_LDR = 0;
@@ -195,10 +200,10 @@ int main(void)
             case SLAVE_MODE_OFF_CTRL_REG1:      //No sampling asked
                 
                 //Write in the buffer
-                slaveBuffer[MSB_LDR]= 0x00;                         //Write 0 in the 3rd register (no LDR sampling)
-                slaveBuffer[LSB_LDR]= 0x00;                         //Write 0 in the 4th register (no LDR sampling)
-                slaveBuffer[MSB_TMP]= 0x00;                         //Write 0 in the 5th register (no TMP sampling)
-                slaveBuffer[LSB_TMP]= 0x00;                         //Write 0 in the 6th register (no TMP sampling)
+                slaveBuffer[MSB_LDR] = 0x00;                         //Write 0 in the 3rd register (no LDR sampling)
+                slaveBuffer[LSB_LDR] = 0x00;                         //Write 0 in the 4th register (no LDR sampling)
+                slaveBuffer[MSB_TMP] = 0x00;                         //Write 0 in the 5th register (no TMP sampling)
+                slaveBuffer[LSB_TMP] = 0x00;                         //Write 0 in the 6th register (no TMP sampling)
 
                 break;
         }    
@@ -212,27 +217,27 @@ int main(void)
             case SLAVE_LED_LDR:
                 
                 //Threshold below which the environment is said to be dark
-                if (average_LDR < 1000)     PWM_val_LDR = 0;    //The RGB led will be set to maximum intensity
+                if (average_LDR < 400)     PWM_val_LDR = 0;    //The RGB led will be set to maximum intensity
 
                 else    PWM_val_LDR = 20;                       //The RGB led will be turned off
                 
                 cmp_val = PWM_val_LDR;
                 break;
             
-            //TMP sensor values range mostly between 46000 and 50000
+            //TMP sensor values range mostly between 9000 and 11000
             case SLAVE_LED_TMP:
                 
                 //Check if value is below lower bound and set compare value to turn off RGB led later on
-                if (average_TMP - 46000 <= 0)    PWM_val_TMP = 20;  
+                if (average_TMP - 9000 <= 0)    PWM_val_TMP = 20;  
                 
                 //Check if value is above upper bound and set compare value to get RGB led max intensity later on
-                else if (average_TMP - 46000 >= 4000)   PWM_val_TMP = 0;
+                else if (average_TMP - 9000 >= 2000)   PWM_val_TMP = 0;
                                
-                else    //The TMP sensor outcome ranges between 46000 and 50000; the intensity will be modulated
+                else    //The TMP sensor outcome ranges between 9000 and 11000; the intensity will be modulated
                 {
                     //Formula to normalize TMP sensor outcome between 0 and 1 and mulitiply with PWM's maximum compare value (20)
                     //To adapt compare value of the modulator
-                    PWM_val_TMP = 20-((average_TMP-46000)/4000.0)*20;
+                    PWM_val_TMP = 20-((average_TMP-9000)/2000.0)*20;
                 }
                 
                 cmp_val = PWM_val_TMP;
