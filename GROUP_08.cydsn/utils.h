@@ -45,9 +45,9 @@ void RGBLed_Start(void);
 void RGBLed_Stop(void);       
 
 // Brief Write new color (c) 
-void RGBLed_WriteColor(uint8_t red, uint8_t green, uint8_t blue);
+void RGBLed_WriteColor(char colors[3]);
 
-void updateLed(uint8_t modulator,uint16_t rgb_value);
+void updateLed(uint8_t modulator,uint16_t rgb_value_ldr,uint16_t rgb_value_tmp,char LEDs[3]);
 void updateTimer(char samples,char defaultPeriod);
 
 /* [] END OF FILE */

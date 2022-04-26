@@ -19,16 +19,30 @@ static void RGBLed_WriteBlue(uint8_t blue);
 char value;
 char newPeriod;
 
-void updateLed(uint8_t modulator,uint16_t rgb_value)
+char red, green, blue;
+
+char colors[3];
+char offColors[3] = {0,0,0};
+
+void updateLed(uint8_t modulator,uint16_t rgb_value_ldr,uint16_t rgb_value_tmp,char LEDs[3])
 {   
 
     switch (modulator)
     {
         case TMP_mod:
-        value = ((rgb_value-10300)*255)/900;
+        value = ((rgb_value_tmp-10300)*255)/900;
         if(value<0) value=0;
-        if(rgb_value<10300) RGBLed_WriteColor(0, 0, 0);
-        else RGBLed_WriteColor(value,0,0);
+        red = LEDs[0];
+        green = LEDs[1];
+        blue = LEDs[2];
+        for(int i=0;i<3;i++)
+        {
+            if(LEDs[i]==1) colors[i]=value;
+            else colors[i]=0;
+        }
+        
+        if(rgb_value_tmp<10300) RGBLed_WriteColor(offColors);
+        else RGBLed_WriteColor(colors);
         
         /*
         PWM_R_WriteCompare((TMP_avg_digit*255)/65535);
@@ -37,8 +51,13 @@ void updateLed(uint8_t modulator,uint16_t rgb_value)
         break;
         
         case LDR_mod:
-        if(rgb_value<30000) RGBLed_WriteColor(0, 0, 255);
-        else RGBLed_WriteColor(0, 0, 0);
+        for(int i=0;i<3;i++)
+        {
+            if(LEDs[i]==1) colors[i]=255;
+            else colors[i]=0;
+        }
+        if(rgb_value_ldr<30000) RGBLed_WriteColor(colors);
+        else RGBLed_WriteColor(offColors);
         /*
         PWM_B_WriteCompare((LDR_avg_digit*255)/65535);
         PWM_G_WriteCompare((LDR_avg_digit*255)/65535);
@@ -61,27 +80,18 @@ void RGBLed_Start()
 }
 
 void RGBLed_Stop()
-{
-    PWM_R_Stop();
-    Clock_Stop();
-    
-    PWM_G_Stop();
-
-    
-    PWM_B_Stop();
-
-    
+{  
     Pin_R_Write(0);
     Pin_G_Write(0);
     Pin_B_Write(0);
 }
 
 // LED colors definition
-void RGBLed_WriteColor(uint8_t red, uint8_t green, uint8_t blue)
+void RGBLed_WriteColor(char colors[3])
 {
-    RGBLed_WriteRed(red);
-    RGBLed_WriteGreen(green);
-    RGBLed_WriteBlue(blue);
+    RGBLed_WriteRed(colors[0]);
+    RGBLed_WriteGreen(colors[1]);
+    RGBLed_WriteBlue(colors[2]);
 }
 
 // Assigning the DC to modulate LED intensity
