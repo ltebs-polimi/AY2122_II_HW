@@ -1,0 +1,20 @@
+
+w 08 00 86 p
+
+w 08 04 p r 08 @1temp_centiCelsius @0temp_centiCelsius p
+
+
+w 08 00 F9 p
+
+w 08 02 p r 08 @1light_LUX @0light_LUX p  
+
+
+w 08 00 B p
+w 08 04 p r 08 @1temp_centiCelsius @0temp_centiCelsius p w 08 02 p r 08 @1light_LUX @0light_LUX p ;sample both channels
+
+
+; Enter DEVICE_STOPPED state (Write status to be 0b00)
+w 08 00 00 p
+
+; Check WHO_AM_I register (Write register WHO_AM_I address and read the content)
+w 08 01 p r 08 x p

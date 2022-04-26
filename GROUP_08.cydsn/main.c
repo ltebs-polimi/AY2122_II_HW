@@ -115,7 +115,7 @@ int main(void)
                     updateLed(modulator,LDR_avg_digit,TMP_avg_digit,LEDs);
                 
                     //convert in temperature
-                    TMP_avg_scaled = ((TMP_avg - TMP_INTERCEPT)/TMP_SLOPE)*10;   //we multiply by 100 to have more resolution
+                    TMP_avg_scaled = ((TMP_avg - TMP_INTERCEPT)/TMP_SLOPE)*10;   //*10 to have an higher resolution
                     
                     //convert in lux
                     LDR = SERIES_RESISTANCE * (ACTUAL_Vdd_mV / LDR_avg - 1.0);

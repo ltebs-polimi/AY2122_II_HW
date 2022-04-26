@@ -40,14 +40,8 @@ void updateLed(uint8_t modulator,uint16_t rgb_value_ldr,uint16_t rgb_value_tmp,c
             if(LEDs[i]==1) colors[i]=value;
             else colors[i]=0;
         }
-        
         if(rgb_value_tmp<10300) RGBLed_WriteColor(offColors);
         else RGBLed_WriteColor(colors);
-        
-        /*
-        PWM_R_WriteCompare((TMP_avg_digit*255)/65535);
-        PWM_G_WriteCompare((TMP_avg_digit*255)/65535);
-        */
         break;
         
         case LDR_mod:
@@ -58,10 +52,6 @@ void updateLed(uint8_t modulator,uint16_t rgb_value_ldr,uint16_t rgb_value_tmp,c
         }
         if(rgb_value_ldr<30000) RGBLed_WriteColor(colors);
         else RGBLed_WriteColor(offColors);
-        /*
-        PWM_B_WriteCompare((LDR_avg_digit*255)/65535);
-        PWM_G_WriteCompare((LDR_avg_digit*255)/65535);
-        */
         break;
     }
     
