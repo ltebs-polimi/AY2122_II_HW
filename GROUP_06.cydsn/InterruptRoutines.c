@@ -48,7 +48,7 @@ extern uint8_t  buffer[]; //slave buffer
 //declaration of masks to control the modifications of registers 
 uint8_t status_mask = 3; //00000011 to read bit 0 and 1 of CR1 (00)
 uint8_t average_mask = 24; //00011000 to read bit 3 and 4 of CR1 (00)
-uint8_t color_mask = 7; //00000111 to read bit 5,6,7 of CR1 (00)
+uint8_t color_mask = 0b11100000; //11100000 to read bit 5,6,7 of CR1 (00)
 uint8_t check_status;
 uint8_t check_average;
 uint8_t check_color;
@@ -67,10 +67,7 @@ uint16_t temp_mv;
 #define TEMP_MAX 5500 //in mV (125°C -> 5500mV = 5.5V)
 
 //declaration of variables to read LDR sensor
-uint16_t ldr_mv;
-uint16_t delta_perc;
-#define TH_PERC //to be defined
-#define REF //set by ourselves after calibration (in mV)
+#define REF_LIGHT_MAX 13351 //set by ourselves after calibration (13351)
 
 //declaration of variables and functions to activate the RGB led
 uint16_t comp_value; 
@@ -128,8 +125,7 @@ CY_ISR(My_ISR) {
     
         if(status == LDR_CH0 || status == BOTH)
         {
-            ldr_mean = value_digit_LDR/average_samples; //reading digit
-            ldr_mv = ADC_DelSig_CountsTo_mVolts(ldr_mean); //reading mV
+            ldr_mean = value_digit_LDR/average_samples; //reading digit (16 bit)
             
             buffer[MSB_LDR] = ldr_mean >>8;       
             buffer[LSB_LDR] = ldr_mean & 0xFF;   
@@ -203,57 +199,21 @@ void calib_sensors (uint8 readout) {
     PWM_B_Stop();
     
     if (readout == LDR_READOUT) {
-            /* When the LED is modulated by the LDR and the environment is dark, 
-            the LED must be switched on with maximum intensity, 
-            while when the environment is bright the LED must be switched off. 
-            Note: the LDR characteristic curve is very steep (almost ON/OFF), 
-            please consider this fact in order to better exploit the sensor dynamic, 
-            either hardware or firmware solution. 
-            */
         
-        
-            /*
-            //stabiliamo soglia ON/OFF con i mV facendo prove
-            
-            delta_perc = (ref - ldr_mv)*100; //ref stabiliamo noi quanto è leggendo cosa ci viene fuori quando settiamo luce/buio
-            
-            //TH_PERC definiamo noi quanto lo vogliamo (tipo 5%?))
-            if (delta_perc < TH_PERC) { 
-                flag_luce = 1;
-            }
-            else (delta_perc > TH_PERC) {
-                flag_luce = 0;
-            }
-
-            //se luce
-            if (flag_luce) {
-            //spengo il LED RGB
+        if (ldr_mean < REF_LIGHT_MAX) {
+            //spegnere
             PWM_RG_Stop();
             PWM_B_Stop();
-            PWM_RG_WriteCompare1(0);
-            PWM_RG_WriteCompare2(0);
-            PWM_B_WriteCompare(0);
-            }
-        
-            //se buio 
-            else {
-            //massima luminosità LED RGB
-            PWM_RG_Start();
-            PWM_B_Start();
             PWM_RG_WriteCompare1(255);
             PWM_RG_WriteCompare2(255);
-            PWM_B_WriteCompare(255);
-            }
-            
-            */
-            
+            PWM_B_WriteCompare(255); }
+        if (ldr_mean < REF_LIGHT_MAX) {
+            activate_RGB(RGB_channel, ldr_mean);
         }
+           
+    }
     
     if (readout == TEMP_READOUT) {
-            /*When the LED is modulated by the TMP, 
-            the LED must be switched off at ambient temperature 
-            and increase intensity with rising temperature 
-            */
 
             //leggere output TEMP (media dei campioni -> temp_mean)
             temp_mv = 500 + 10*((float)temp_mean/65535); //scale factor = 10mV/°C 
@@ -262,12 +222,11 @@ void calib_sensors (uint8 readout) {
             
             if ((temp_mv <= TEMP_AMB) || (temp_mv > TEMP_MAX)) { //se sto sotto la temperatura ambiente o se sto superando quella massima
                 //spengo il LED RGB
-                
                 PWM_RG_Stop();
                 PWM_B_Stop();
-                PWM_RG_WriteCompare1(0);
-                PWM_RG_WriteCompare2(0);
-                PWM_B_WriteCompare(0);             
+                PWM_RG_WriteCompare1(255);
+                PWM_RG_WriteCompare2(255);
+                PWM_B_WriteCompare(255);             
             }
             
             if ((temp_mv > TEMP_AMB) && (temp_mv < TEMP_MAX)) { //se sto sopra la temperatura ambiente
@@ -286,10 +245,10 @@ se il 5° = 1 -> aziono R
 se il 6° = 1 -> aziono G
 se il 7° = 1 -> aziono B 
 */
-void activate_RGB(uint8 RGB_channel,uint16 comp_value){
-    if (((RGB_channel) & (00000100)) == 1) PWM_RG_WriteCompare1(comp_value); //check se 1 è Red
-    if (((RGB_channel) & (00000010)) == 1) PWM_RG_WriteCompare2(comp_value); //check se 2 è Green
-    if (((RGB_channel) & (00000001)) == 1) PWM_B_WriteCompare(comp_value);
+void activate_RGB(uint8 RGB_channel,uint16 value){
+    if (((RGB_channel) & (00100000)) == 1) PWM_RG_WriteCompare1(value);
+    if (((RGB_channel) & (01000000)) == 1) PWM_RG_WriteCompare2(value);
+    if (((RGB_channel) & (10000000)) == 1) PWM_B_WriteCompare(value);
 } 
 
 
