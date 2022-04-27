@@ -1,36 +1,33 @@
-; We set the default value of 5 samples and 50 Hz of transmission rate (we have a clock of 5kHz and a period of 20)
-; The user is free to change the desired value from almost 2 up
-; to almost 10 samples modifying the bit devoted to that configuration. The transmission rate can be modified too, and it can vary
-; almost between 10 Hz and 100 Hz.
-; (please just the two lines 'w 08 00 17 p' and 'w 08 01 14 p' are supposed to be modified in order to match your needs. The first eight 
-; lines are supposed to be repeated in order to visualize the data collected on a chart):
+;Electronic Technologies and Biosensors Laboratory
+;Semester II - AY 2021/2022
+;Patrick Franke and Chloé Canavate
+;Configuration file
 
-; in particular the user could be interested in changing the third number of this last line (i.e. 17 in hex) that codifies both the
-; number of sample and the function modality (which sensor we want to read). It is codified by 8 bits:
-; -bit 7 - (not read by the program)
-; -bit 6 - (not read by the program)
-; -bits 5:2 number of samples (4 bits necessary to codify the number of samples in binary, i.e. 0101 codifies 5 samples)
-; -bits 1:0 modality (00 shut down of the communication; 01 only temperature sensor on; 10 only light sensor on; 11 both sensors on)
-; in this case 0x17 corresponds to 00010111 --> 00-0101(5 samples in decimal)-11(both sensors on)
-; another example could be 0x16 that corresponds to 00010110 --> 00-0101(5 samples in decimal)-10(just the light sensor on)
 
-; REMEMBER: if the user wants to change the number of samples, in order to obtain a desired 'F' trasmission rate,
-; the timer period value has to be changed as well according to this formula:
+;The default configuration of the control register 1 is 0x00:
+;- no sampling
+;- led modality set to exploit ldr readout
+;- number of average samples set to 1
+;- RGB led channels off
 
-; new_period_value = 5000/(F*new_sample_number); --- 5000Hz is our f_clock
+;The user might be interested in writing the control register 1 knowing that:
+;- bits 0 and 1 codify respectively the LDR and TMP status and have to be set to 1 to sample the corresponding channel.
+;- bits 2 encode the led modality, either 0 to exploit LDR readout or 1 to use TMP one.
+;- bits 3 and 4 correspond to the number of average samples, which can range between 1 and 4.
+;  Note that since the required data transmission rate is 50Hz (rate) and the timer clock frequency (freq) is 3kHz,
+;  the timer period (period) is adapted according to the number of average samples (N) --> period = freq / (N * rate).
+;- bits 5, 6 and 7 allow the user to choose the color combination for the RGB led, and correspond respectively to the Red,
+;  Green and Blue channels. When the bit is set to 1, the channel is turned on.
 
-; i.e new_sample_number=4;  F_desired = 25 Hz ---> new_period_value=5000/(25*4)=50;
+;Examples:
+;- Sample both sensors + LDR readout for led modality + 2 average samples + cyan (blue+green) led color
+;- 11001011 --> CB (hex)
+w 08 00 CB p
+;- Sample LDR sensor only + TMP readout for led modality + 4 average samples + red led color
+;- 00111101 --> 3D (hex)
+w 08 00 3D p
 
-;the new_period_value must be an integer number and it should be inserted in the register_2 by running the following line:
-;w 08 01 xx p
-;where xx is the .hex value of the new period. 'F' can vary almost from 10 Hz to 100 Hz.
-
-;w 08 01 14 p
-;as mentioned above we set the default value of the period to 0x14 (20 in decimal) in order to match our needs of having a 
-;transmission rate of 50 Hz by computing the avarage of 5 different samples.
-
-w 08 00 03 p
-
+;To visualize sensors' outputs, the following commands must be repeated + chart tab:
 w 08 02 p 
 r 08 @1LDR p
 w 08 03 p 
