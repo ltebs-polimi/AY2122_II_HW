@@ -1,0 +1,116 @@
+;-------------------------------------------------;
+;ELECTRONIC TECHNOLOGIES AND BIOSENSORS LABORATORY;
+;                Assignment 1                     ;
+;                Authors: Group 1                 ;
+;-------------------------------------------------;
+
+; Reading the WHO_AM_I Register of the I2C Slave.
+; If <r 08 BC+ p> is returned, the slave is correctly
+; acknowledged
+w 08 01 p
+r 08 x p
+
+;-------------------------------------------------;
+; The following commands refer to Control Reg 1,
+; the only register in the I2C Slave Buffer that 
+; allows R&W operations. For the other 7 register
+; only read operations are possbile
+
+; >Default register setting
+w 08 00 00 p
+
+;-------------- 1 Sample averaging ---------------;
+; >LDR only sampling,
+; LDR driven RGB led, color
+; combination [R,G,B] = [1,1,1]
+w 08 00 E1 p
+
+; >LDR and TMP sampling, 
+; LDR driven RGB led, color
+; combination [R,G,B] = [1,1,1]
+w 08 00 E3 p
+
+; >TMP only sampling, 
+; TMP driven RGB led, color
+; combination [R,G,B] = [1,1,1]
+w 08 00 E6 p
+
+; >LDR and TMP sampling,
+; TMP driven RGB led, color
+; combination [R,G,B] = [1,1,1]
+w 08 00 E7 p
+
+;-------------- 2 Samples averaging --------------;
+; >LDR only sampling, 
+; LDR driven RGB led, color
+; combination [R,G,B] = [1,1,1]
+w 08 00 E9 p
+
+; >LDR and TMP sampling,
+; LDR driven RGB led, color
+; combination [R,G,B] = [1,1,1]
+w 08 00 EB p
+
+; >TMP only sampling, 
+; TMP driven RGB led, color
+; combination [R,G,B] = [1,1,1]
+w 08 00 EE p
+
+; >LDR and TMP sampling, 
+; TMP driven RGB led, color
+; combination [R,G,B] = [1,1,1]
+w 08 00 EF p
+
+;-------------- 3 Samples averaging --------------;
+; >LDR only sampling, 
+; LDR driven RGB led, color
+; combination [R,G,B] = [1,1,1]
+w 08 00 F1 p
+
+; >LDR and TMP sampling, 
+; LDR driven RGB led, color
+; combination [R,G,B] = [1,1,1]
+w 08 00 F3 p
+
+; >TMP only sampling,
+; TMP driven RGB led, color
+; combination [R,G,B] = [1,1,1]
+w 08 00 F6 p
+
+; >LDR and TMP sampling, 
+; TMP driven RGB led, color
+; combination [R,G,B] = [1,1,1]
+w 08 00 F7 p
+
+;-------------- 4 Samples averaging --------------;
+; >LDR only sampling, 
+; LDR driven RGB led, color
+; combination [R,G,B] = [1,1,1]
+w 08 00 F9 p
+
+; >LDR and TMP sampling, 
+; LDR driven RGB led, color
+; combination [R,G,B] = [1,1,1]
+w 08 00 FB p
+
+; >TMP only sampling, 
+; TMP driven RGB led, color
+; combination [R,G,B] = [1,1,1]
+w 08 00 FE p
+
+; >LDR and TMP sampling,
+; TMP driven RGB led, color
+; combination [R,G,B] = [1,1,1]
+w 08 00 FF p
+
+;-------------- Plot data from sensors --------------;
+; Readout the slave buffer,
+; Only the LSB is shown,
+; [LDR]=lux and [temp]=°C
+w 08 03 p
+r 08 @LDR_L p
+w 08 05 p
+r 08 @temp_L p
+
+
+
