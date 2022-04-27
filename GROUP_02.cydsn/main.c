@@ -71,16 +71,16 @@ uint16_t  R_LDR  = 0;  // valore del LDR resistor
 //uint16_t  LUX_value;
 int32  average_TMP_temp;  // valore della temperatura 
 int32  average_LDR_lux;
+
 #define q_TMP             500
 #define sensibility_TMP    10
 
-#define SERIES_RESISTANCE           990
-#define ACTUAL_Vdd_mV               4663.0
+#define SERIES_RESISTANCE           1000
+#define ACTUAL_Vdd_mV               4869.0
 #define TEN_TO_LDR_INTERCEPT        100000  // pow(10,q) = 100000 (q = 5)
-#define LDR_SLOPE                   -0.682
-  
-
+#define LDR_SLOPE                   -0.7
     
+
 /*// ldr
     out_LDR_mV = ADC_DeltaSigma_CountsTo_mVolts(value_LDR_code);
    // R_LDR = (R1_VAL )*( (out_LDR_mV) / ( 5000 - out_LDR_mV));  // 5000 mV is voltage supply, formula con resistenza di pull-up 
