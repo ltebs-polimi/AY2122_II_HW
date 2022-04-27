@@ -1,13 +1,21 @@
-/**
-* \brief Main source file for the assignement.
-*
-*
-* \authors Group 1
-* \date April 14, 2022
+/* =====================================================
+ *
+ * ELECTRONIC TECHNOLOGIES AND BIOSENSORS LABORATORY
+ * Academic year 2021/22, II Semester
+ * Assignment 1
+
+ * Authors: Group 1
+ *
+ * ----------------------- MAIN ------------------------
+ * Main source file for the assignement.
+ * -----------------------------------------------------
+ * 
+ * =====================================================
 */
 
-
 #include "project.h"
+#include "InterruptRoutines.h"
+#include "RGB_Led_driver.h"
 
 
 #define SLAVE_BUFFER_SIZE 6 ///< Size of the buffer of the I2C slave
@@ -49,12 +57,12 @@ int main(void)
     EZI2C_SetBuffer1(SLAVE_BUFFER_SIZE, BUFFER_RW_SIZE ,slaveBuffer);
     
     // Set up the PWM for the R, G, B channels
-    RGBled_Start();
+    RGBLed_Start();
     
     // Start with the RGB led switched off
-    RGBled_WriteRed(RGB_LED_OFF);
-    RGBled_WriteGreen(RGB_LED_OFF);
-    RGBled_WriteBlu(RGB_LED_OFF);
+    RGBLed_WriteRed(RGB_LED_OFF);
+    RGBLed_WriteGreen(RGB_LED_OFF);
+    RGBLed_WriteBlue(RGB_LED_OFF);
 
 
     for(;;)
