@@ -46,7 +46,7 @@ int main(void)
     /*SLAVE BUFFER SETTING*/
     
     //setting the initial values of the slave buffer register
-    buffer[CR1] = 0x1E; //initial value: 00011110 -> RGB off, 4 samples to be avg, TEMP readout, sampling temperature
+    buffer[CR1] = 00011001; //RGB off, 4 samples to be avg, LDR readout, sampling ldr
     buffer[WhoAmI] = 0xBC; //fixed
     buffer[MSB_TEMP] = 0x00;
     buffer[LSB_TEMP]= 0x00;
