@@ -1,16 +1,4 @@
 /* ========================================
- *
- * Copyright YOUR COMPANY, THE YEAR
- * All Rights Reserved
- * UNPUBLISHED, LICENSED SOFTWARE.
- *
- * CONFIDENTIAL AND PROPRIETARY INFORMATION
- * WHICH IS THE PROPERTY OF your company.
- *
- * ========================================
-*/
-
-/* ========================================
 
 */
 #include "InterruptRoutines.h"
@@ -75,7 +63,7 @@ int i=0;
 
 //declaration of variables to read temperature sensor
 uint16_t temp_mv; 
-#define TEMP_AMB 100 //in mV (25°C -> 750mV = 0.75V)
+#define TEMP_AMB 500 //in mV (25°C -> 750mV = 0.75V)
 #define TEMP_MAX 5500 //in mV (125°C -> 5500mV = 5.5V)
 
 //declaration of variables to read LDR sensor
@@ -86,7 +74,8 @@ uint16_t delta_perc;
 
 //declaration of variables and functions to activate the RGB led
 uint16_t comp_value; 
-void setPWM_RGB(uint8);
+void calib_sensors(uint8);
+void activate_RGB(uint8_t, uint16_t); 
 
 
 /*ISR FOR THE MANAGEMENT OF SAMPLING, AVERAGING AND WRITING OF THE 16 DATA BITS OF THE TWO CHANNELS 
@@ -133,7 +122,7 @@ CY_ISR(My_ISR) {
     if (status != OFF) i++; 
     //if the sampling is on, update the count of number of samples in the summatino 
     
-    /*CALCULATING THE MENA AND WRITING OF THE 16 DATA BITS IN THE RESPECTED BUFFER REGISTERS*/
+    /*CALCULATING THE MEAN AND WRITING OF THE 16 DATA BITS IN THE RESPECTED BUFFER REGISTERS*/
     
     if (i>=average_samples) { //it occurs if the number of samples to be averaged has been reached
     
@@ -154,7 +143,7 @@ CY_ISR(My_ISR) {
         }    
 
         //call the function that checks the 2° bit of CR1 and consequently activates the RGB led
-        setPWM_RGB(readout);            
+        calib_sensors(readout);            
     }
         
     value_digit_LDR=0;  //reset the summation in order to prepare for the next acquisition
@@ -172,24 +161,23 @@ void EZI2C_ISR_ExitCallback(void)
 {   //variables to check for any changes in the registers
     check_status = (buffer[CR1] & status_mask);   //reading from CR1 the device' status  
     check_average = (buffer[CR1] & average_mask); //reading from CR1 the number of samples to be averaged  
-    check_color = (buffer[CR1] & color_mask);     //reading from CR1 which colors of the RGB led activate  
+    check_color = (buffer[CR1] & color_mask);     //reading from CR1 which colors of the RGB led have to be activated  
     
     if (status != check_status) //if the users has changed the device' status (bit 1-0 of CR1)
     {
         status = check_status; //update the status variable 
         
         if (status == BOTH) 
-        
-        //reset the count of the samples to be averaged
-        i=0;                 
-        //reset the summatinos in order to prepare for the next acquisitino 
-        value_digit_LDR=0;   
-        value_digit_temp=0;
-        //at each status change the data registers are reset to zero
-        buffer[MSB_LDR]=0;   
-        buffer[LSB_LDR]=0;
-        buffer[MSB_TEMP]=0;
-        buffer[LSB_TEMP]=0;
+            //reset the count of the samples to be averaged
+            i=0;                 
+            //reset the summatinos in order to prepare for the next acquisitino 
+            value_digit_LDR=0;   
+            value_digit_temp=0;
+            //at each status change the data registers are reset to zero
+            buffer[MSB_LDR]=0;   
+            buffer[LSB_LDR]=0;
+            buffer[MSB_TEMP]=0;
+            buffer[LSB_TEMP]=0;
   
     }
     
@@ -206,10 +194,9 @@ void EZI2C_ISR_ExitCallback(void)
 /* [] END OF FILE */
 
 
-/*FUNCTION THAT MODULATES WITH PWM THE INTENSITY 'OF THE LED RGB BASED ON THE READINGS OF THE SENSORS
-....................add description of the different working principles ...........................*/
+/*FUNCTION THAT MODULATES WITH PWM THE INTENSITY 'OF THE LED RGB BASED ON THE READINGS OF THE SENSORS*/
 
-void setPWM_RGB (uint8 readout) {
+void calib_sensors (uint8 readout) {
     PWM_RG_Enable();
     PWM_RG_Stop();
     PWM_B_Enable();
@@ -226,9 +213,7 @@ void setPWM_RGB (uint8 readout) {
         
         
             /*
-            //controllo soglia LDR (luce/buio) con variazione percentuale del valore
-            //non ricaviamo la resistenza LDR con cui poi ottenere retta di calibrazione lineare (in loglog) con i lux
-            //stabiliamo soglia ON/OFF con i mV
+            //stabiliamo soglia ON/OFF con i mV facendo prove
             
             delta_perc = (ref - ldr_mv)*100; //ref stabiliamo noi quanto è leggendo cosa ci viene fuori quando settiamo luce/buio
             
@@ -245,6 +230,9 @@ void setPWM_RGB (uint8 readout) {
             //spengo il LED RGB
             PWM_RG_Stop();
             PWM_B_Stop();
+            PWM_RG_WriteCompare1(0);
+            PWM_RG_WriteCompare2(0);
+            PWM_B_WriteCompare(0);
             }
         
             //se buio 
@@ -275,28 +263,34 @@ void setPWM_RGB (uint8 readout) {
             if ((temp_mv <= TEMP_AMB) || (temp_mv > TEMP_MAX)) { //se sto sotto la temperatura ambiente o se sto superando quella massima
                 //spengo il LED RGB
                 
-                
                 PWM_RG_Stop();
+                PWM_B_Stop();
                 PWM_RG_WriteCompare1(0);
                 PWM_RG_WriteCompare2(0);
-                PWM_B_WriteCompare(0);
-                PWM_B_Stop();
+                PWM_B_WriteCompare(0);             
             }
             
             if ((temp_mv > TEMP_AMB) && (temp_mv < TEMP_MAX)) { //se sto sopra la temperatura ambiente
                 //aumento intensità del LED RGB fino alla temperatura massima
                 comp_value = 2.55*(temp_mv) - 63.75; 
-                PWM_RG_Enable();
-                PWM_RG_Start();
-                PWM_B_Enable();
-                PWM_B_Start();
-                PWM_RG_WriteCompare1(comp_value);
-                PWM_RG_WriteCompare2(comp_value);
-                PWM_B_WriteCompare(comp_value);
+                activate_RGB(RGB_channel, comp_value);
+                
             }
     }
 }
 
+/*FUNCTION THAT ACCORDING TO THE CHANNELS SELECTED ACTIVATES THE COLORS OF THE RGB LED*/
+
+/*RGB_channel è uguale a color_check che ottengo mascherando la lettura con color_mask = 7 (00000111)
+se il 5° = 1 -> aziono R
+se il 6° = 1 -> aziono G
+se il 7° = 1 -> aziono B 
+*/
+void activate_RGB(uint8 RGB_channel,uint16 comp_value){
+    if (((RGB_channel) & (00000100)) == 1) PWM_RG_WriteCompare1(comp_value); //check se 1 è Red
+    if (((RGB_channel) & (00000010)) == 1) PWM_RG_WriteCompare2(comp_value); //check se 2 è Green
+    if (((RGB_channel) & (00000001)) == 1) PWM_B_WriteCompare(comp_value);
+} 
 
 
 /* [] END OF FILE */
