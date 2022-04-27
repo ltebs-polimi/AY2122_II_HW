@@ -13,6 +13,9 @@
 #include "project.h"
 #include "InterruptRoutines.h"
 #include "EZI2C.h"
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 // Define I2C Slave Buffer Structure
 #define CTRL_REG_1          0            // Address of Control Register 1
@@ -39,15 +42,16 @@ uint8_t slave_pointer_Buffer[BUFFER_SIZE] = {0};
 #define LED_CHECK_DELAY 600               //Blink delay in ms of LED CHECK, which is used to visually verify that 
                                            //an active channel is controlling the LED
 
+
 // Variables declaration
 volatile uint8_t PacketReadyFlag = 0;      // Initialize flag to indicate if bytes are to send or not 
 volatile int32 sum_TMP;                    // Summation of binary values sampled from TMP
 volatile int32 sum_LDR;                    // Summation of binary values sampled from LDR
 
-int16 average_TMP_code;                  // Averaged values of the X samples considered from TMP (binary)
-int16 average_LDR_code;                  // Averaged values of the X samples considered from LDR (binary)
-int16 average_TMP_mV;                    // Averaged values of the X samples considered from TMP (mV)
-int16 average_LDR_mV;                    // Averaged values of the X samples considered from LDR (mV)
+int32 average_TMP_code;                  // Averaged values of the X samples considered from TMP (binary)
+int32 average_LDR_code;                  // Averaged values of the X samples considered from LDR (binary)
+int32 average_TMP_mV;                    // Averaged values of the X samples considered from TMP (mV)
+int32 average_LDR_mV;                    // Averaged values of the X samples considered from LDR (mV)
 
 uint8_t counter = 0;                     // Counter to be incremented in order to keep track of number of samples
 uint8_t LED_modality;                    // LED modality that indicates the sensor that modulates RGB LED intensity
@@ -60,6 +64,30 @@ volatile uint8_t status;                    // bits 0 and 1; status can be set t
                                             // b. 01 (to sample LDR channel)
                                             // c. 10 (to sample TMP channel) 
                                             // d. 11 (to sample both channel)
+
+//Conversione TMP e LDR
+#define R1_VAL               // R1 resistor value da scegliere
+uint16_t  R_LDR  = 0;  // valore del LDR resistor 
+//uint16_t  LUX_value;
+int32  average_TMP_temp;  // valore della temperatura 
+int32  average_LDR_lux;
+#define q_TMP             500
+#define sensibility_TMP    10
+
+#define SERIES_RESISTANCE           990
+#define ACTUAL_Vdd_mV               4663.0
+#define TEN_TO_LDR_INTERCEPT        100000  // pow(10,q) = 100000 (q = 5)
+#define LDR_SLOPE                   -0.682
+  
+
+    
+/*// ldr
+    out_LDR_mV = ADC_DeltaSigma_CountsTo_mVolts(value_LDR_code);
+   // R_LDR = (R1_VAL )*( (out_LDR_mV) / ( 5000 - out_LDR_mV));  // 5000 mV is voltage supply, formula con resistenza di pull-up 
+    //R_LDR = R1_VAL * ((5000/out_LDR_mV) - 1);  formul con resistore di pull down 
+    LUX_value =  10000 / (R_LDR*10)^(4/3) ; // Ricavo il valore in lux direttamente dalla caratteristica */
+
+   
 
 // Timer period
 uint8_t timer_period = 0;                   // Period of transmission 
@@ -80,7 +108,7 @@ u_int16_t MAX_Value_LDR=0xD7D3;  // It corresponds to the minimum brightness val
 // DA SISTEMARE!!!! 
 //corrisponde al minimo valore di luminosità misurabile: con RLDR a 10 lux pari a 72,6kohm, ADC con dinamica da 0V a 5V e guadagno 1; Rpd=10kohm, a 0,1 lux abbiamo 4,973V corrispondente ad un codice 0xFE9A 
                          // lo usiamo come periodo dei PWM
-u_int16_t MAX_Value_TMP=0x5999; // corrisponde al codice massimo corrispondente alla temperatura più alta misurabili con il TMP (125°C) con stesse impostazioni ADC di LDR. A 125°C Vtmp=1750mV a cui corrisponde un codice HEX 0x5999 
+u_int16_t MAX_Value_TMP=0x4CCC; // corrisponde al codice massimo corrispondente alla temperatura più alta misurabili con il TMP (125°C) con stesse impostazioni ADC di LDR. A 125°C Vtmp=1750mV a cui corrisponde un codice HEX 0x5999 
 //Start PWM   -----forse va fatto partire all'interno degli IF
 //PWM_LED_Start(); //start PWM
 
@@ -93,7 +121,9 @@ int main(void)
     Timer_Start(); 
     ADC_DeltaSigma_Start();
     isr_ADC_StartEx(Custom_ISR_ADC); 
-    EZI2C_Start();    
+    EZI2C_Start();   
+    PWM_Start();
+
     
     AMux_ADC_Start(); 
 
@@ -110,7 +140,9 @@ int main(void)
     // Note: The Period minus one is the initial value loaded into the period register. The software can change this register
     // at any time with the Timer_WritePeriod() API. To get the equivalent result using this API, the Period value from the
     // customizer, minus one, must be used as the argument in the function. (Datasheet Timer 2.80, pag 5)
-       
+   
+    
+    
     for(;;)
     {
         
@@ -134,11 +166,7 @@ int main(void)
     
         if (status == EZI2C_STOP_REG_1) {
             
-            LED_CHECK_Write(LOW);
-                                    
-            PWM_B_Stop();
-            PWM_G_Stop();
-            PWM_R_Stop();
+            LED_CHECK_Write(LOW);                                   
            
             slave_pointer_Buffer[MSB_TMP]  = 0x00;
             slave_pointer_Buffer[MSB_LDR]  = 0x00;
@@ -161,12 +189,15 @@ int main(void)
                     // Map to mV
                     average_LDR_mV = ADC_DeltaSigma_CountsTo_mVolts(average_LDR_code);
                     
+                        double LDR = SERIES_RESISTANCE * (ACTUAL_Vdd_mV / average_LDR_mV- 1.0);
+                        average_LDR_lux = (int16) (pow(LDR/TEN_TO_LDR_INTERCEPT, 1/LDR_SLOPE));
+                    
                     // Save into I2C buffer           
                     // Right shift in order to memorize the Most Significant Byte (MSB) in the address 0x02 of the I2C Slave Buffer 
-                    slave_pointer_Buffer[MSB_LDR] = average_LDR_mV >> 8;    
+                    slave_pointer_Buffer[MSB_LDR] = average_LDR_lux >> 8;    
                     // Application of mask 0b11111111 (0xFF in hexadecimal notation) in order to memorize the Least Significant Byte (LSB)
                     // in the address 0x03 of the I2C Slave Buffer 
-                    slave_pointer_Buffer[LSB_LDR] = average_LDR_mV & 0xFF;
+                    slave_pointer_Buffer[LSB_LDR] = average_LDR_lux & 0xFF;
                     
                     // Control of LED using PWM
                     if(LED_modality==TMP_readout){
@@ -175,34 +206,20 @@ int main(void)
                         LED_CHECK_Write(!LED_CHECK_Read());
                         CyDelay(LED_CHECK_DELAY);// Add delay
                         
-                        compareValueTMP = average_TMP_code;
-                        PWM_B_WritePeriod(MAX_Value_TMP);
-                        PWM_B_WriteCompare(compareValueTMP);
-                        PWM_G_WritePeriod(MAX_Value_TMP);
-                        PWM_G_WriteCompare(compareValueTMP);
-                        PWM_R_WritePeriod(MAX_Value_TMP);
-                        PWM_R_WriteCompare(compareValueTMP);
-                        PWM_B_Start();
-                        PWM_G_Start();
-                        PWM_R_Start();
-                 
-                                
+                        // Since the only channel that is read in this modality is the LDR, we decided not to activate the PWM 
+                        // when the user choose that the LED has to be controlled by the TMP sensor. 
+                                                      
                     }
                     else if (LED_modality==LDR_readout){
                         
                         LED_CHECK_Write(LOW);
-                                                
-                        compareValueLDR = average_LDR_code;
-                        PWM_B_WritePeriod(MAX_Value_LDR);
-                        PWM_B_WriteCompare(MAX_Value_LDR-compareValueLDR);
-                        PWM_G_WritePeriod(MAX_Value_LDR);
-                        PWM_G_WriteCompare(MAX_Value_LDR-compareValueLDR);
-                        PWM_R_WritePeriod(MAX_Value_LDR);
-                        PWM_R_WriteCompare(MAX_Value_LDR-compareValueLDR);
-                        PWM_B_Start();
-                        PWM_G_Start();
-                        PWM_R_Start();
+                        Pin_LED_R_Write(HIGH);
+                        Pin_LED_B_Write(HIGH);
+                        Pin_LED_G_Write(HIGH);
                         
+                        compareValueLDR = average_LDR_code;
+                        PWM_WritePeriod(MAX_Value_LDR);
+                        PWM_WriteCompare(MAX_Value_LDR-compareValueLDR);
                     }
                         
                     // Reset counter and variables related to LDR sensor
@@ -210,6 +227,7 @@ int main(void)
                     counter = 0;
                     average_LDR_code = 0;
                     average_LDR_mV = 0;
+
                     // bisogna inserire PWM_Stop()???
                     // se esco da questo IF i LED devono in ogni caso lampeggiare anche se si entra nell'IF dell'altro sensore
                     //quindi non devo azzerare i compareValueLDR e MAXValueLDR ??
@@ -239,12 +257,14 @@ int main(void)
                     // Map to mV
                     average_TMP_mV = ADC_DeltaSigma_CountsTo_mVolts(average_TMP_code);
                     
+                    average_TMP_temp = (average_TMP_mV - q_TMP)/sensibility_TMP;
+                    
                     // Save into I2C buffer          
                     // Right shift in order to memorize the Most Significant Byte (MSB) in the address 0x04 of the I2C Slave Buffer 
-                    slave_pointer_Buffer[MSB_TMP] = average_TMP_mV >> 8;    
+                    slave_pointer_Buffer[MSB_TMP] = average_TMP_temp >> 8;    
                     // Application of mask 0b11111111 (0xFF in hexadecimal notation) in order to memorize the Least Significant Byte (LSB)
                     // in the address 0x05 of the I2C Slave Buffer 
-                    slave_pointer_Buffer[LSB_TMP] = average_TMP_mV & 0xFF;
+                    slave_pointer_Buffer[LSB_TMP] = average_TMP_temp & 0xFF;
                     
                     // Control of LED using PWM
                     if(LED_modality==LDR_readout){
@@ -253,40 +273,31 @@ int main(void)
                         LED_CHECK_Write(!LED_CHECK_Read());
                         CyDelay(LED_CHECK_DELAY);// Add delay
                         
-                        PWM_B_Stop(); // è proprio necessario fermarlo???
-                        PWM_G_Stop(); // è proprio necessario fermarlo???
-                        PWM_R_Stop(); // è proprio necessario fermarlo???
-                        compareValueLDR = average_LDR_code;
-                        PWM_B_WritePeriod(MAX_Value_LDR);
-                        PWM_B_WriteCompare(MAX_Value_LDR-compareValueLDR);
-                        PWM_G_WritePeriod(MAX_Value_LDR);
-                        PWM_G_WriteCompare(MAX_Value_LDR-compareValueLDR);
-                        PWM_R_WritePeriod(MAX_Value_LDR);
-                        PWM_R_WriteCompare(MAX_Value_LDR-compareValueLDR);
-                        PWM_B_Start();
-                        PWM_G_Start();
-                        PWM_R_Start();
-                      
-
+                        // Since the only channel that is read in this modality is the TMP, we decided not to activate the PWM 
+                        // when the user choose that the LED has to be controlled by the LDR sensor.                 
                                 
                     }
                     else if (LED_modality==TMP_readout){
                         
                         LED_CHECK_Write(LOW);
+                        Pin_LED_R_Write(HIGH);
+                        Pin_LED_B_Write(HIGH);
+                        Pin_LED_G_Write(HIGH);
                         
-                        PWM_B_Stop(); // è proprio necessario fermarlo???
+                       /* PWM_B_Stop(); // è proprio necessario fermarlo???
                         PWM_G_Stop(); // è proprio necessario fermarlo???
-                        PWM_R_Stop(); // è proprio necessario fermarlo???
+                        PWM_R_Stop(); // è proprio necessario fermarlo???*/
+                        
+                        
+                        
                         compareValueTMP = average_TMP_code;
-                        PWM_B_WritePeriod(MAX_Value_TMP);
-                        PWM_B_WriteCompare(compareValueTMP);
-                        PWM_G_WritePeriod(MAX_Value_TMP);
-                        PWM_G_WriteCompare(compareValueTMP);
-                        PWM_R_WritePeriod(MAX_Value_TMP);
-                        PWM_R_WriteCompare(compareValueTMP);
+                        PWM_WritePeriod(MAX_Value_TMP);
+                        PWM_WriteCompare(compareValueTMP);
+
+                        /*
                         PWM_B_Start();
                         PWM_G_Start();
-                        PWM_R_Start();
+                        PWM_R_Start();*/
                         
                     }
                     
@@ -295,6 +306,7 @@ int main(void)
                     counter = 0;
                     average_TMP_code = 0;
                     average_TMP_mV = 0; 
+
                     // vedi commenti precedenti
                 }
                 
@@ -321,46 +333,59 @@ int main(void)
                     average_LDR_mV = ADC_DeltaSigma_CountsTo_mVolts(average_LDR_code);
                     average_TMP_mV = ADC_DeltaSigma_CountsTo_mVolts(average_TMP_code);
                     
+                    average_TMP_temp = (average_TMP_mV - q_TMP)/sensibility_TMP;
+                    
+                    double LDR = SERIES_RESISTANCE * (ACTUAL_Vdd_mV / average_LDR_mV- 1.0);
+                    average_LDR_lux = (int16) (pow(LDR/TEN_TO_LDR_INTERCEPT, 1/LDR_SLOPE));
+                    
                     // Save into I2C buffer          
                     // Right shift in order to memorize the Most Significant Byte (MSB) of the LDR and TMP sensors in the corresponding addresses 
-                    slave_pointer_Buffer[MSB_LDR] = average_LDR_mV >> 8;    
-                    slave_pointer_Buffer[MSB_TMP] = average_TMP_mV >> 8;
+                    slave_pointer_Buffer[MSB_LDR] = average_LDR_lux >> 8;    
+                    slave_pointer_Buffer[MSB_TMP] = average_TMP_temp >> 8;
                     // Application of mask 0b11111111 (0xFF in hexadecimal notation) in order to memorize the Least Significant Byte (LSB)
                     // of the LDR and TMP sensors in the corresponding addresses 
-                    slave_pointer_Buffer[LSB_LDR] = average_LDR_mV & 0xFF;
-                    slave_pointer_Buffer[LSB_TMP] = average_TMP_mV & 0xFF;
+                    slave_pointer_Buffer[LSB_LDR] = average_LDR_lux & 0xFF;
+                    slave_pointer_Buffer[LSB_TMP] = average_TMP_temp & 0xFF;
                     
                     // Control of LED using PWM
                     if(LED_modality==TMP_readout){
-                        PWM_B_Stop(); // è proprio necessario fermarlo???
+                        
+                        LED_CHECK_Write(LOW);
+                        Pin_LED_R_Write(HIGH);
+                        Pin_LED_B_Write(HIGH);
+                        Pin_LED_G_Write(HIGH);
+                        
+                       /* PWM_B_Stop(); // è proprio necessario fermarlo???
                         PWM_G_Stop(); // è proprio necessario fermarlo???
-                        PWM_R_Stop(); // è proprio necessario fermarlo???
+                        PWM_R_Stop(); // è proprio necessario fermarlo???*/
                         compareValueTMP = average_TMP_code;
-                        PWM_B_WritePeriod(MAX_Value_TMP);
-                        PWM_B_WriteCompare(compareValueTMP);
-                        PWM_G_WritePeriod(MAX_Value_TMP);
-                        PWM_G_WriteCompare(compareValueTMP);
-                        PWM_R_WritePeriod(MAX_Value_TMP);
-                        PWM_R_WriteCompare(compareValueTMP);
+                        PWM_WritePeriod(MAX_Value_TMP);
+                        PWM_WriteCompare(compareValueTMP);
+
+                        /*
                         PWM_B_Start();
                         PWM_G_Start();
-                        PWM_R_Start();
+                        PWM_R_Start();*/
                                 
                     }
                     else if (LED_modality==LDR_readout){
-                        PWM_B_Stop(); // è proprio necessario fermarlo???
+                        /*PWM_B_Stop(); // è proprio necessario fermarlo???
                         PWM_G_Stop(); // è proprio necessario fermarlo???
-                        PWM_R_Stop(); // è proprio necessario fermarlo???
+                        PWM_R_Stop(); // è proprio necessario fermarlo???*/
+                        
+                        LED_CHECK_Write(LOW);
+                        Pin_LED_R_Write(HIGH);
+                        Pin_LED_B_Write(HIGH);
+                        Pin_LED_G_Write(HIGH);
+                        
                         compareValueLDR = average_LDR_code;
-                        PWM_B_WritePeriod(MAX_Value_LDR);
-                        PWM_B_WriteCompare(MAX_Value_LDR-compareValueLDR);
-                        PWM_G_WritePeriod(MAX_Value_LDR);
-                        PWM_G_WriteCompare(MAX_Value_LDR-compareValueLDR);
-                        PWM_R_WritePeriod(MAX_Value_LDR);
-                        PWM_R_WriteCompare(MAX_Value_LDR-compareValueLDR);
+                        PWM_WritePeriod(MAX_Value_LDR);
+                        PWM_WriteCompare(MAX_Value_LDR-compareValueLDR);
+
+                        /*
                         PWM_B_Start();
                         PWM_G_Start();
-                        PWM_R_Start();
+                        PWM_R_Start();*/
  
                         }
                     
@@ -372,6 +397,7 @@ int main(void)
                     average_TMP_code = 0;
                     average_LDR_mV = 0; 
                     average_TMP_mV = 0; 
+
                 }
                 
                 PacketReadyFlag = 0;
