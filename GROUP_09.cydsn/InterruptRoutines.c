@@ -17,15 +17,10 @@
 
 uint8_t channel = 0;
 
-extern volatile uint8_t ReadFlag;
-
 CY_ISR(Custom_ISR_ADC)
 {
     // Read Timer status register to bring interrupt line low
     Timer_ReadStatusRegister();
-    //if (ReadFlag == 0)
-    
-    //ReadFlag = 1;
     
     if ((channel == LDR_CHANNEL)&&(AvgReady == 0)){
         
@@ -44,11 +39,11 @@ CY_ISR(Custom_ISR_ADC)
     
     }
     
-    if ((channel == LDR_CHANNEL) && (AvgReady == 0)){
+    if ((channel == TMP_CHANNEL) && (AvgReady == 0)){
     
         AMux_FastSelect(TMP_CHANNEL);           // select the value of the TMP sensor 
         ADC_DelSig_StartConvert(); 
-        digit_TMP = ADC_DelSig_Read32();  // read the value of the TMP sensor
+        digit_TMP = ADC_DelSig_Read32();        // read the value of the TMP sensor
         if (digit_TMP < 0) digit_TMP = 0;
         if (digit_TMP > 65535) digit_TMP = 65535;
         mv_TMP = ADC_DelSig_CountsTo_mVolts(digit_TMP);

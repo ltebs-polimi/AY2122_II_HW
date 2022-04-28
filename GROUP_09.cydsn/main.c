@@ -54,15 +54,12 @@ int main(void)
 
     // set EZI2C buffer
     EZI2C_SetBuffer1(SLAVE_BUFFER_SIZE, SLAVE_BUFFER_SIZE - READ_REGISTERS, slaveBuffer);
-    timer_period = DEFAULT_PERIOD;
-    Timer_WritePeriod(timer_period);
     average_old = 1;
     timer_default = Timer_ReadPeriod();
     for(;;)
     
     {
         // Number of samples extracted from the bit 3 and 4 of the control register
-        
         average_samples = ((slaveBuffer[CTRL_REG1] & MASK_AVERAGE_SAMPLES)>>3)+1; //0x18 = 0001 1000 mask
                        
         // Set the timer period
@@ -83,7 +80,7 @@ int main(void)
         led_modality = (slaveBuffer[CTRL_REG1] & MASK_LED_MODALITY) >> 2;   // 0x04 = 0000 0100
         
         // Check only the LED channel
-        led_channel = (slaveBuffer[CTRL_REG1] & MASK_LED_CHANNEL) >> 5;     // 0x07 = 0000 0111
+        led_channel = (slaveBuffer[CTRL_REG1] & MASK_LED_CHANNEL) >> 5;     // 0xE0 = 1110 0000
         
         Color rgb_color = {0, 0, 0};
         
@@ -267,6 +264,7 @@ int main(void)
                     sum_TMP = 0;
                     num_samples = 0;
                     ReadFlag = 0;
+                    AvgReady = 0;
                     
                 }
                 
@@ -335,7 +333,6 @@ int main(void)
                     num_samples=0;
                     sum_LDR=0;
                     AvgReady = 0;
-                    ReadFlag = 0;
                 }
                 
                 break;

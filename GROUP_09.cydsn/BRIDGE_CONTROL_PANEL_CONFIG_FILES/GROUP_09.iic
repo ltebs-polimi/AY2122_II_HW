@@ -1,0 +1,39 @@
+;STOP DEVICE
+w 08 00 00 p 
+
+; CTRL REG 1: Ch_B | Ch_G | Ch_R | avg_1 | avg_0 | LED_mod | TMP | LDR |
+
+; avg over 1 sample  0b00000
+; avg over 2 samples 0b01000
+; avg over 3 samples 0b10000
+; avg over 4 samples 0b11000
+
+; control only RED channel (0b00100000), only GREEN (0b01000000), only BLUE (0b10000000). All combinations are valid.
+
+; LED modality = 0 --> LDR modulates the RGB. LED modality = 1 --> TMP modulates the RGB. 
+
+; READ LDR SENSOR (RED)
+w 08 00 F9 p  ;write this to average LDR over 4 samples, modulating all 3 channels (RGB)
+w 08 00 B1 p  ;write this to average LDR over 3 samples, modulating R and B channels.
+w 08 00 C9 p  ;write this to average LDR over 2 samples, modulating G and B channels.
+w 08 00 21 p  ;write this to average LDR over 1 samples, mod only R channel.       
+w 08 02 p       
+r 08 @1LDR @0LDR p
+
+; READ TMP SENSOR (BLUE)
+w 08 00 7A p  ;write this to average TMP over 4 samples, mod GR channels. 
+w 08 00 52 p  ;write this to average TMP over 3 samples, mod G channel.
+w 08 00 8A p  ;write this to average TMP over 2 samples, mod B channel.  
+w 08 00 02 p  ;write this to average TMP over 1 samples, no channels modulated
+ w 08 04 p       
+r 08 @1TMP @0TMP p
+
+; READ BOTH SENSORS
+ w 08 00 7F p  ;write this to average over 4 samples, RG channels modulated by TMP
+ w 08 00 53 p  ;write this to average over 3 samples, G channel modulated by LDR.
+ w 08 00 EF p  ;write this to average over 2 samples, RGB channels modulated by TMP.
+ w 08 00 C7 p  ;write this to average over 1 samples, no RGB driving. 
+w 08 02 p
+r 08 @1LDR @0LDR p
+w 08 04 p
+r 08 @1TMP @0TMP p
