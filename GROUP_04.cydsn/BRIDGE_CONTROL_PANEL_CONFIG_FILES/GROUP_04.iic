@@ -1,0 +1,38 @@
+;Electronic Technologies and Biosensors Laboratory
+;Semester II - AY 2021/2022
+;Patrick Franke and Chloé Canavate
+;Configuration file
+
+
+;The default configuration of the control register 1 is 0x00:
+;- no sampling
+;- led modality set to exploit ldr readout
+;- number of average samples set to 1
+;- RGB led channels off
+
+;The user might be interested in writing the control register 1 knowing that:
+;- bits 0 and 1 codify respectively the LDR and TMP status and have to be set to 1 to sample the corresponding channel.
+;- bits 2 encode the led modality, either 0 to exploit LDR readout or 1 to use TMP one.
+;- bits 3 and 4 correspond to the number of average samples, which can range between 1 and 4.
+;  Note that since the required data transmission rate is 50Hz (rate) and the timer clock frequency (freq) is 3kHz,
+;  the timer period (period) is adapted according to the number of average samples (N) --> period = freq / (N * rate).
+;- bits 5, 6 and 7 allow the user to choose the color combination for the RGB led, and correspond respectively to the Red,
+;  Green and Blue channels. When the bit is set to 1, the channel is turned on.
+
+;Examples:
+;- Sample both sensors + LDR readout for led modality + 2 average samples + cyan (blue+green) led color
+;- 11001011 --> CB (hex)
+w 08 00 CB p
+;- Sample LDR sensor only + TMP readout for led modality + 4 average samples + red led color
+;- 00111101 --> 3D (hex)
+w 08 00 3D p
+
+;To visualize sensors' outputs, the following commands must be repeated + chart tab:
+w 08 02 p 
+r 08 @1LDR p
+w 08 03 p 
+r 08 @0LDR p
+w 08 04 p 
+r 08 @1TMP p 
+w 08 05 p 
+r 08 @0TMP p 
