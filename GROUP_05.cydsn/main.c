@@ -31,7 +31,7 @@ int main(void)
 {
     //initializing functions 
     
-    CyGlobalIntEnable; 
+    
     
     EZI2C_Start();
     
@@ -45,6 +45,8 @@ int main(void)
 
     PWM_RG_Enable();
     PWM_B_ENable(); 
+    
+    CyGlobalIntEnable; 
     
     
     //setting the initial values of the buffer register 
