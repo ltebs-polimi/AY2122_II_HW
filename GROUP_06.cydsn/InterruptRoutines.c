@@ -1,5 +1,7 @@
-/* ======================================== */
-
+/* ========================================
+    AURORA PIERANTOZZI
+    LETIZIA MOZZORECCHIA
+*/
 
 #include "InterruptRoutines.h"
 #include "project.h"
@@ -31,8 +33,8 @@
 //declaration of global variables 
 extern uint8_t average_samples; //number of samples to be averaged
 extern uint8_t buffer[];        //slave buffer
-uint8_t status;                 //which MUX channel activate during sampling 
-uint8_t readout;                //reading modality
+uint8_t status = LDR_CH0;       //which MUX channel activate during sampling 
+uint8_t readout = TEMP_READOUT; //reading modality
 uint8_t RGB_channel;            //RGB colors to switch on
 
 //declaration of masks to control the modifications of registers 
@@ -134,11 +136,11 @@ CY_ISR(My_ISR) {
 
         //calling the function that checks bit 2 of CR1 and consequently activates RGB led
         setPWM_RGB(readout);            
-    }
     
-    value_digit_LDR=0;  //reset the summation in order to prepare for the next acquisition 
-    value_digit_temp=0;
-    i=0;                //reset the counts of samples to be averaged
+        value_digit_LDR=0;  //reset the summation in order to prepare for the next acquisition 
+        value_digit_temp=0;
+        i=0;                //reset the counts of samples to be averaged
+    }
 }
 
 
@@ -158,21 +160,20 @@ void EZI2C_ISR_ExitCallback(void) {
     check_color = (buffer[CR1] & color_mask);     //reading from CR1 which colors of the RGB led have to be activated  
     
     if (status != check_status) { //if the users has changed the device' status (bit 1-0 of CR1)
-        status = check_status; //update the status variable 
         
-        if (status == BOTH) {
-            //reset the count of the samples to be averaged
-            i=0;                 
-            //reset the summation in order to prepare for the next acquisition
-            value_digit_LDR=0;   
-            value_digit_temp=0;
-            //at each status change the data registers are reset to zero
-            buffer[MSB_LDR]=0;   
-            buffer[LSB_LDR]=0;
-            buffer[MSB_TEMP]=0;
-            buffer[LSB_TEMP]=0;
-        }
+        status = check_status; //update the status variable 
+        //reset the count of the samples to be averaged
+        i=0;                 
+        //reset the summation in order to prepare for the next acquisition
+        value_digit_LDR=0;   
+        value_digit_temp=0;
+        //at each status change the data registers are reset to zero
+        buffer[MSB_LDR]=0;   
+        buffer[LSB_LDR]=0;
+        buffer[MSB_TEMP]=0;
+        buffer[LSB_TEMP]=0;
     }
+    
     
     if (average_samples != check_average) { //if the user has changed the number of samples to be averaged (bit 3-4 of CR1)                                   
         average_samples = check_average;   //update the average_samples variable
@@ -194,32 +195,31 @@ FUNCTION THAT LOOKS FOR SENSORS' THRESHOLDS AND ACCORDINGLY SET THE DC OF THE PW
 */
 
 void setPWM_RGB (uint8 readout) {
-    //PWM_RG_Stop();
-    //PWM_B_Stop();
-    
+
     if (readout == LDR_READOUT) {
         
         if (ldr_mean < REF_LIGHT_MAX) { //when in full light, the RGB is switched OFF
-            PWM_RG_WriteCompare1(65535);
-            PWM_RG_WriteCompare2(65535);
-            PWM_B_WriteCompare(65535); 
+            PWM_RG_WriteCompare1(0);
+            PWM_RG_WriteCompare2(0);
+            PWM_B_WriteCompare(0); 
         }
         
         else { //when in darkness, the RGB is switched ON and its intensity is modulated according to the light
-            activate_colors(RGB_channel, ldr_mean);
+            activate_colors(RGB_channel, (65535-ldr_mean));
         }  
     }
     
     if (readout == TEMP_READOUT) {
             
             if (temp_mean <= TEMP_AMB) { //when below ambient temperature, the RGB is switched OFF
-                PWM_RG_WriteCompare1(65535);
-                PWM_RG_WriteCompare2(65535);
-                PWM_B_WriteCompare(65535);             
+                PWM_RG_WriteCompare1(0);
+                PWM_RG_WriteCompare2(0);
+                PWM_B_WriteCompare(0);             
             }
             
             else { //when over the ambient temperature, the RGB is switched ON and its intensity is modulated according to the temperature 
-                comp_value = (temp_mean*2.521) - 35288.08; //to scale the operating digit temperature range (15000-40000) into 0-65535
+                comp_value = (temp_mean * 2.521) - 35288.08; //to scale the operating digit temperature range (15000-40000) into 0-65535
+                if (comp_value > 65535) comp_value = 65535;
                 activate_colors(RGB_channel, comp_value);
             }
     }
