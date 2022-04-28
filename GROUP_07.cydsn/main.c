@@ -57,7 +57,7 @@ int main(void)
         samples = samples + 1; //altrimenti con 00 mi campiona 0 valori e con 11 ne campiona 3
         
         //Setto il timer in modo da inviare i dati sempre a 50 Hz
-        Timer_WritePeriod(24/samples);
+        Timer_WritePeriod(12/samples);
 
         
         //campiono il registro per il led

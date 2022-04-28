@@ -17,7 +17,7 @@
 #define TMP_channel 1
 
 
-int32 temp = 0, ldr = 0, value = 0;
+int32 temp = 0, ldr = 0, value_ldr = 0, value_temp;
 _Bool send_data = 0;
 uint8_t i = 0;
 
@@ -40,12 +40,12 @@ CY_ISR(Custom_ISR_ADC)
         
         for(i=0; i<samples; i++)
         {
-            value = ADC_DelSig_PR_Read32();
-            if (value < 0)  value = 0;
-            if (value > 65535)  value  = 65535;
+            value_ldr = ADC_DelSig_PR_Read32();
+            if (value_ldr < 0)  value_ldr = 0;
+            if (value_ldr > 65535)  value_ldr  = 65535;
             
-            ldr += value;
-            value = 0;
+            ldr += value_ldr;
+            value_ldr = 0;
         }
         
         ldr = ldr/samples;
@@ -70,12 +70,12 @@ CY_ISR(Custom_ISR_ADC)
         
         for(i=0; i<samples; i++)
         {
-            value = ADC_DelSig_PR_Read32();
-            if (value < 0)  value = 0;
-            if (value > 65535)  value  = 65535;
+            value_temp = ADC_DelSig_PR_Read32();
+            if (value_temp < 0) value_temp = 0;
+            if (value_temp > 65535) value_temp  = 65535;
             
-            temp += value;
-            value = 0;
+            temp += value_temp;
+            value_temp = 0;
         }
         
         temp = temp/samples;
@@ -100,21 +100,21 @@ CY_ISR(Custom_ISR_ADC)
         {
             //campiono ldr
             AMux_1_FastSelect(LDR_channel);
-            value = ADC_DelSig_PR_Read32();
-            if (value < 0)  value = 0;
-            if (value > 65535)  value  = 65535;
+            value_ldr = ADC_DelSig_PR_Read32();
+            if (value_ldr < 0)  value_ldr = 0;
+            if (value_ldr > 65535)  value_ldr  = 65535;
             
-            ldr += value;
-            value = 0;
+            ldr += value_ldr;
+            value_ldr = 0;
             
             //campiono temp
             AMux_1_FastSelect(TMP_channel);
-            value = ADC_DelSig_PR_Read32();
-            if (value < 0)  value = 0;
-            if (value > 65535)  value  = 65535;
+            value_temp = ADC_DelSig_PR_Read32();
+            if (value_temp < 0) value_temp = 0;
+            if (value_temp > 65535) value_temp  = 65535;
             
-            temp += value;
-            value = 0;
+            temp += value_temp;
+            value_temp = 0;
         }
         
         ldr = ldr/samples;
