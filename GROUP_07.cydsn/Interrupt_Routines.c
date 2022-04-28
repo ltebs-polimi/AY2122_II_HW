@@ -18,29 +18,34 @@
 
 
 int32 temp = 0, ldr = 0, value_ldr = 0, value_temp;
-_Bool send_data = 0;
+int32 temp_old = 0, ldr_old = 0;
+
 uint8_t i = 0;
 
 CY_ISR(Custom_ISR_ADC)
 {   
-    //status = 0, spengo tutto
+    //status = 0, everything is turned OFF
+    //set variables to 0
     if (status == 0)
     {
         temp = 0;
         ldr = 0;
     }
     
-    //status = 1, campiono LDR
+    //status = 1, LDR sampling
     if (status == 1)
     {
-        //campiono il canale
+        ldr_old = 0;
+        
+        //sample LDR channel
         AMux_1_FastSelect(LDR_channel);
         
         ldr = 0;
-        
+        //loop to sample the correct amount of times
         for(i=0; i<samples; i++)
         {
             value_ldr = ADC_DelSig_PR_Read32();
+            
             if (value_ldr < 0)  value_ldr = 0;
             if (value_ldr > 65535)  value_ldr  = 65535;
             
@@ -48,29 +53,37 @@ CY_ISR(Custom_ISR_ADC)
             value_ldr = 0;
         }
         
+        //average of the sampled values
         ldr = ldr/samples;
         
-        //trasmetto il valore letto
+        //virtual filter to limit some overshooting in the graph
+        if (ldr - ldr_old < -1000)  ldr = ldr_old;
+        else    ldr_old = ldr;
+        
+        //transmission of the sampled values
         slave_buffer[2] = ldr >> 8;
         slave_buffer[3] = ldr & 0xFF;
         
-        //setto a 0 i registri non usati
+        //set the unused registers to 0
         slave_buffer[4]=0; 
         slave_buffer[5]=0; 
     }
    
     
-    //status = 2, campiono TMP
+    //status = 2, TEMP sampling
     if (status == 2)
     {
-        //campiono il canale
+        
+        //sample LDR channel
         AMux_1_FastSelect(TMP_channel);
         
         temp = 0;
         
+        //loop to sample the correct amount of times
         for(i=0; i<samples; i++)
         {
             value_temp = ADC_DelSig_PR_Read32();
+            
             if (value_temp < 0) value_temp = 0;
             if (value_temp > 65535) value_temp  = 65535;
             
@@ -78,36 +91,43 @@ CY_ISR(Custom_ISR_ADC)
             value_temp = 0;
         }
         
+        //average of the sampled values
         temp = temp/samples;
         
-        //setto a 0 i registri non usati
+        //virtual filter to limit some overshooting in the graph
+        if (temp - temp_old < -50)  temp = temp_old;
+        else temp_old = temp;
+        
+        ////set the unused registers to 0
         slave_buffer[2]=0; 
         slave_buffer[3]=0;
         
-        //trasmetto il valore letto
+        //transmission of the sampled values
         slave_buffer[4] = temp >> 8;
         slave_buffer[5] = temp & 0xFF;
     }
     
     
-    // status = 3, campiono entrambi
+    //status = 3, sample of both channels
     if (status == 3) 
     {
         temp = 0;
         ldr = 0;
         
+        //loop to sample the correct amount of times
         for(i=0; i<samples; i++)
         {
-            //campiono ldr
+            //LDR sampling
             AMux_1_FastSelect(LDR_channel);
             value_ldr = ADC_DelSig_PR_Read32();
+            
             if (value_ldr < 0)  value_ldr = 0;
             if (value_ldr > 65535)  value_ldr  = 65535;
             
             ldr += value_ldr;
             value_ldr = 0;
             
-            //campiono temp
+            //TEMP sampling
             AMux_1_FastSelect(TMP_channel);
             value_temp = ADC_DelSig_PR_Read32();
             if (value_temp < 0) value_temp = 0;
@@ -120,13 +140,20 @@ CY_ISR(Custom_ISR_ADC)
         ldr = ldr/samples;
         temp = temp/samples;
         
-        //mando temperatura
-        slave_buffer[4] = temp >> 8;
-        slave_buffer[5] = temp & 0xFF;
+        //virtual filters to limit some overshooting in the graph
+        if (temp - temp_old < -50)  temp = temp_old;
+        else temp_old = temp;
         
-        //mando LDR
+        if (ldr - ldr_old < -1000)  ldr = ldr_old;
+        else    ldr_old = ldr;        
+        
+        //transmission of the ldr values
         slave_buffer[2] = ldr >> 8;
         slave_buffer[3] = ldr & 0xFF;
+        
+        //transmission of the temperature values
+        slave_buffer[4] = temp >> 8;
+        slave_buffer[5] = temp & 0xFF;
     }
 }
 
