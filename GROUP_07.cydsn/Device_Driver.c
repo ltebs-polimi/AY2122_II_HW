@@ -16,7 +16,6 @@ void Device_Start(){
     ADC_DelSig_PR_Start(); 
     AMux_1_Start(); 
     ADC_DelSig_PR_StartConvert(); 
-    Timer_Start(); 
     PWM_RG_Start(); 
     PWM_B_Start(); 
 }

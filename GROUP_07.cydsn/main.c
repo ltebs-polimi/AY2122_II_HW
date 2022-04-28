@@ -19,7 +19,7 @@ uint8_t slave_buffer[SLAVE_BUFFER_SIZE];
 uint8_t count = 0;
 int status = 0, samples = 0;
 _Bool red = 0, green = 0, blue = 0;
-int16 control = 0;
+int32 control = 0;
 _Bool led_modality = 0;
 
 extern int32 temp, ldr;
@@ -29,7 +29,7 @@ int main(void)
     CyGlobalIntEnable; /* Enable global interrupts. */
     
     //abilito timer
-    //Timer_Start();
+    Timer_Start();
     
     //abilito interrupt
     isr_ADC_StartEx(Custom_ISR_ADC);
@@ -57,7 +57,7 @@ int main(void)
         samples = samples + 1; //altrimenti con 00 mi campiona 0 valori e con 11 ne campiona 3
         
         //Setto il timer in modo da inviare i dati sempre a 50 Hz
-        Timer_WritePeriod(samples*255/4);
+        Timer_WritePeriod(24/samples);
 
         
         //campiono il registro per il led
