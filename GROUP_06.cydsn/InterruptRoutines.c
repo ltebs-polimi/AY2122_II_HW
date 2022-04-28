@@ -1,12 +1,12 @@
-/* ========================================
+/* ======================================== */
 
-*/
+
 #include "InterruptRoutines.h"
 #include "project.h"
 
 /*DECLARATIONS*/
 
-//definition MUX channels (CH0 --> LDR, CH1 --> TEMP)
+//definition MUX channels 
 #define LDR 0
 #define TEMP 1 
 
@@ -18,37 +18,27 @@
 #define MSB_TEMP 4
 #define LSB_TEMP 5
 
-//definition of device's states (bit 0 and 1 of CR1 with address 0x00)
-//read with status_mask
-#define OFF 0   //value 00 to stop 
+//definition of device's states (bit 0 and 1 of CR1 with address 0x00), read with status_mask
+#define OFF 0       //value 00 to stop 
 #define LDR_CH0 1   //value 01 to sample LDR
-#define TEMP_CH1 2   //value 10 to sample TEMP
-#define BOTH 3  //value 11 to sample both 
+#define TEMP_CH1 2  //value 10 to sample TEMP
+#define BOTH 3      //value 11 to sample both 
 
-//definition of modality state (bit 2 of CR1 with address 0x00)
-//read with readout
+//definition of modality state (bit 2 of CR1 with address 0x00), read with readout
 #define TEMP_READOUT 1
 #define LDR_READOUT 0
 
-//definitino of number of samples to be averaged (bit 3 and 4 of CR1 with address 0x00)
-//read with average_mask
-#define ONE_SAMP 0 //value 00 to sample 1 item 
-#define TWO_SAMP 1 //valore 01 to sample 2 items
-#define THREE_SAMP 2 //valore 10 to sample 3 items
-#define FOUR_SAMP 3 //valore 11 to sample 4 items
-
-
 //declaration of global variables 
 extern uint8_t average_samples; //number of samples to be averaged
-extern uint8_t status;  //what to sample 
-extern uint8_t readout; //reading modality
-extern uint8_t RGB_channel; //RGB color to switch on
-extern uint8_t  buffer[]; //slave buffer
+extern uint8_t buffer[];        //slave buffer
+uint8_t status;                 //which MUX channel activate during sampling 
+uint8_t readout;                //reading modality
+uint8_t RGB_channel;            //RGB colors to switch on
 
 //declaration of masks to control the modifications of registers 
-uint8_t status_mask = 3; //00000011 to read bit 0 and 1 of CR1 (00)
-uint8_t average_mask = 24; //00011000 to read bit 3 and 4 of CR1 (00)
-uint8_t color_mask = 0b11100000; //11100000 to read bit 5,6,7 of CR1 (00)
+uint8_t status_mask = 3;     //00000011 to read bit 0 and 1 of CR1 (00)
+uint8_t average_mask = 0x18; //00011000 to read bit 3 and 4 of CR1 (00)
+uint8_t color_mask = 0xE0;   //11100000 to read bit 5,6,7 of CR1 (00)
 uint8_t check_status;
 uint8_t check_average;
 uint8_t check_color;
@@ -61,24 +51,31 @@ uint16_t temp_mean;
 uint16_t ldr_mean;
 int i=0;
 
-//declaration of variables to read temperature sensor
-uint16_t temp_mv; 
-#define TEMP_AMB 500 //in mV (25°C -> 750mV = 0.75V)
-#define TEMP_MAX 5500 //in mV (125°C -> 5500mV = 5.5V)
-
-//declaration of variables to read LDR sensor
-#define REF_LIGHT_MAX 13351 //set by ourselves after calibration (13351)
-
 //declaration of variables and functions to activate the RGB led
 uint16_t comp_value; 
-void calib_sensors(uint8);
-void activate_RGB(uint8_t, uint16_t); 
+void setPWM_RGB(uint8);
+void activate_colors(uint8_t, uint16_t); 
+
+//defines to set sensors' thresholds
+#define TEMP_AMB 15000 
+/* TEMP_AMB set by oursevles after calibration (retrieved from BCP) 
+   * range for setting ambient temperature: 15000 - 17000 -> 17°C-18°C
+   * maximum temperature (for setting maximum intensity on the RGB led): 40000 -> 40°C-45°C  
+*/
+
+#define REF_LIGHT_MAX 13351  
+/* REF_LIGHT_MAX set by oursevles after calibration (retrieved from BCP) 
+*/
 
 
-/*ISR FOR THE MANAGEMENT OF SAMPLING, AVERAGING AND WRITING OF THE 16 DATA BITS OF THE TWO CHANNELS 
-IN THE RESPECTED BUFFER REGISTERS (number of samples to average can be modified by writing on the 
-respective registers from Bridge Control Panel; 
-in the code the values are initialized according to the project specifications*/
+/***************************************************************************************************************
+ISR FOR THE MANAGEMENT OF SAMPLING, AVERAGING AND WRITING OF THE 16 DATA BITS IN THE RESPECTED BUFFER REGISTERS
+****************************************************************************************************************/
+
+/*  The MUX channel to activate during sampling and the number of samples to average can be modified by writing on 
+    the respective registers from Bridge Control Panel.
+*/
+
 
 CY_ISR(My_ISR) {
  
@@ -86,24 +83,25 @@ CY_ISR(My_ISR) {
     
     /*SAMPLING CHANNEL CH0 (LDR)*/
     
-    if(status == LDR_CH0 || status == BOTH) {   //it occurs only when status is 01 or 11
-    
-        AMUX_Select(LDR);                   //connect the MUX to the right channel 
-        ADC_DelSig_StartConvert();         //switch on the ADC
+    if(status == LDR_CH0 || status == BOTH) {//it occurs only when status is 01 or 11
+
+        
+        AMUX_Select(LDR); //connect the MUX to the right channel 
+        ADC_DelSig_StartConvert(); //switch on the ADC
                                            
         value_digit = ADC_DelSig_Read32(); //sampling the signal
     
         if (value_digit<0) value_digit=0;
         if (value_digit>65535) value_digit=65535;
     
-        value_digit_LDR += value_digit;   //monitor the summation of samples to be averaged
-        ADC_DelSig_StopConvert();         //switch off the ADC
+        value_digit_LDR += value_digit; //monitor the summation of samples to be averaged
+        ADC_DelSig_StopConvert(); //switch off the ADC
         //for reasons of conversion stability, from datasheet, it is suggested to keep it off during channel changing
     }
     
     /*SAMPLING CHANNEL CH1 (TEMPERATURE)*/
     
-    if(status == TEMP_CH1 || status == BOTH) {    //it occurs only when status is 10 or 11
+    if(status == TEMP_CH1 || status == BOTH) { //it occurs only when status is 10 or 11
     
         AMUX_Select(TEMP);
         ADC_DelSig_StartConvert();
@@ -116,57 +114,56 @@ CY_ISR(My_ISR) {
         ADC_DelSig_StopConvert();
     }
     
-    if (status != OFF) i++; 
-    //if the sampling is on, update the count of number of samples in the summatino 
+    if (status != OFF) i++; //if the sampling is on, update the count of number of samples in the summation
+ 
     
     /*CALCULATING THE MEAN AND WRITING OF THE 16 DATA BITS IN THE RESPECTED BUFFER REGISTERS*/
     
     if (i>=average_samples) { //it occurs if the number of samples to be averaged has been reached
     
-        if(status == LDR_CH0 || status == BOTH)
-        {
+        if(status == LDR_CH0 || status == BOTH){
             ldr_mean = value_digit_LDR/average_samples; //reading digit (16 bit)
-            
             buffer[MSB_LDR] = ldr_mean >>8;       
-            buffer[LSB_LDR] = ldr_mean & 0xFF;   
-            
+            buffer[LSB_LDR] = ldr_mean & 0xFF;  
         }
-        if(status == TEMP_CH1 || status == BOTH){
-            temp_mean = value_digit_temp/average_samples; //reading °C
+        if(status == TEMP_CH1 || status == BOTH) {
+            temp_mean = value_digit_temp/average_samples; //reading digit (16 bit)
             buffer[MSB_TEMP] = temp_mean >> 8;
             buffer[LSB_TEMP] = temp_mean & 0xFF;
-
         }    
 
-        //call the function that checks the 2° bit of CR1 and consequently activates the RGB led
-        calib_sensors(readout);            
+        //calling the function that checks bit 2 of CR1 and consequently activates RGB led
+        setPWM_RGB(readout);            
     }
-        
-    value_digit_LDR=0;  //reset the summation in order to prepare for the next acquisition
+    
+    value_digit_LDR=0;  //reset the summation in order to prepare for the next acquisition 
     value_digit_temp=0;
     i=0;                //reset the counts of samples to be averaged
-
 }
 
 
-/*UNCTION EXECUTED AT THE OUTPUT OF EACH CALLBACK OF THE MASTER TO MODIFY THE PARAMETERS OF THE CODE 
-(STATUS, SAMPLES TO BE AVERAGED AND RGB LED CHANNELS TO BE ACTIVATED) IF MODIFIED BY THE USER AND MANAGE THE LED) */
+/*************************************************************
+FUNCTION EXECUTED AT THE OUTPUT OF EACH CALLBACK OF THE MASTER
+*************************************************************/
+/*
+    Parameters of the code (status, samples to be averaged and RGB led channels to be activated) are modified if 
+    modified by the user in the registers (by writing on the BCP).
+*/
 
-void EZI2C_ISR_ExitCallback(void)
+void EZI2C_ISR_ExitCallback(void) {
 
-{   //variables to check for any changes in the registers
+    //variables to check for any changes in the registers
     check_status = (buffer[CR1] & status_mask);   //reading from CR1 the device' status  
     check_average = (buffer[CR1] & average_mask); //reading from CR1 the number of samples to be averaged  
     check_color = (buffer[CR1] & color_mask);     //reading from CR1 which colors of the RGB led have to be activated  
     
-    if (status != check_status) //if the users has changed the device' status (bit 1-0 of CR1)
-    {
+    if (status != check_status) { //if the users has changed the device' status (bit 1-0 of CR1)
         status = check_status; //update the status variable 
         
-        if (status == BOTH) 
+        if (status == BOTH) {
             //reset the count of the samples to be averaged
             i=0;                 
-            //reset the summatinos in order to prepare for the next acquisitino 
+            //reset the summation in order to prepare for the next acquisition
             value_digit_LDR=0;   
             value_digit_temp=0;
             //at each status change the data registers are reset to zero
@@ -174,12 +171,12 @@ void EZI2C_ISR_ExitCallback(void)
             buffer[LSB_LDR]=0;
             buffer[MSB_TEMP]=0;
             buffer[LSB_TEMP]=0;
-  
+        }
     }
     
     if (average_samples != check_average) { //if the user has changed the number of samples to be averaged (bit 3-4 of CR1)                                   
         average_samples = check_average;   //update the average_samples variable
-        }
+    }
     
     if (RGB_channel != check_color) { //if the user has changed the colors of the RGB led to activate (bit 5-6-7 of CR1)                                    
         RGB_channel = check_color;   //update the RGB_channel variable
@@ -187,68 +184,70 @@ void EZI2C_ISR_ExitCallback(void)
     
 }
 
-/* [] END OF FILE */
+/*************************************************************************************************
+FUNCTION THAT LOOKS FOR SENSORS' THRESHOLDS AND ACCORDINGLY SET THE DC OF THE PWM DRIVING RGB LED
+**************************************************************************************************/
 
+/*  Input Parameter: 
+    * readout: 
+      modality used to modulate RGB led intensity.
+*/
 
-/*FUNCTION THAT MODULATES WITH PWM THE INTENSITY 'OF THE LED RGB BASED ON THE READINGS OF THE SENSORS*/
-
-void calib_sensors (uint8 readout) {
-    PWM_RG_Enable();
-    PWM_RG_Stop();
-    PWM_B_Enable();
-    PWM_B_Stop();
+void setPWM_RGB (uint8 readout) {
+    //PWM_RG_Stop();
+    //PWM_B_Stop();
     
     if (readout == LDR_READOUT) {
         
-        if (ldr_mean < REF_LIGHT_MAX) {
-            //spegnere
-            PWM_RG_Stop();
-            PWM_B_Stop();
-            PWM_RG_WriteCompare1(255);
-            PWM_RG_WriteCompare2(255);
-            PWM_B_WriteCompare(255); }
-        if (ldr_mean < REF_LIGHT_MAX) {
-            activate_RGB(RGB_channel, ldr_mean);
+        if (ldr_mean < REF_LIGHT_MAX) { //when in full light, the RGB is switched OFF
+            PWM_RG_WriteCompare1(65535);
+            PWM_RG_WriteCompare2(65535);
+            PWM_B_WriteCompare(65535); 
         }
-           
+        
+        else { //when in darkness, the RGB is switched ON and its intensity is modulated according to the light
+            activate_colors(RGB_channel, ldr_mean);
+        }  
     }
     
     if (readout == TEMP_READOUT) {
-
-            //leggere output TEMP (media dei campioni -> temp_mean)
-            temp_mv = 500 + 10*((float)temp_mean/65535); //scale factor = 10mV/°C 
             
-            //controllo soglia temperatura ambiente TEMP_AMB
-            
-            if ((temp_mv <= TEMP_AMB) || (temp_mv > TEMP_MAX)) { //se sto sotto la temperatura ambiente o se sto superando quella massima
-                //spengo il LED RGB
-                PWM_RG_Stop();
-                PWM_B_Stop();
-                PWM_RG_WriteCompare1(255);
-                PWM_RG_WriteCompare2(255);
-                PWM_B_WriteCompare(255);             
+            if (temp_mean <= TEMP_AMB) { //when below ambient temperature, the RGB is switched OFF
+                PWM_RG_WriteCompare1(65535);
+                PWM_RG_WriteCompare2(65535);
+                PWM_B_WriteCompare(65535);             
             }
             
-            if ((temp_mv > TEMP_AMB) && (temp_mv < TEMP_MAX)) { //se sto sopra la temperatura ambiente
-                //aumento intensità del LED RGB fino alla temperatura massima
-                comp_value = 2.55*(temp_mv) - 63.75; 
-                activate_RGB(RGB_channel, comp_value);
-                
+            else { //when over the ambient temperature, the RGB is switched ON and its intensity is modulated according to the temperature 
+                comp_value = (temp_mean*2.521) - 35288.08; //to scale the operating digit temperature range (15000-40000) into 0-65535
+                activate_colors(RGB_channel, comp_value);
             }
     }
 }
 
-/*FUNCTION THAT ACCORDING TO THE CHANNELS SELECTED ACTIVATES THE COLORS OF THE RGB LED*/
+/***********************************************************************************
+FUNCTION THAT ACTIVATES THE COLORS OF THE RGB LED ACCORDING TO THE CHANNELS SELECTED
+************************************************************************************/
 
-/*RGB_channel è uguale a color_check che ottengo mascherando la lettura con color_mask = 7 (00000111)
-se il 5° = 1 -> aziono R
-se il 6° = 1 -> aziono G
-se il 7° = 1 -> aziono B 
+/*  Input Parameters: 
+    * RGB_channel: 
+      equal to color_check obtained by masking the buffer reading with color_mask (11100000):
+      if the bit 5 is on -> Red PWM is activated
+      if the bit 6 is on -> Green PWM is activated
+      if the bit 7 is on -> Blue PWM is activated
+    * value:
+      compare value used to modulates the PWM driving RGB channels.
 */
-void activate_RGB(uint8 RGB_channel,uint16 value){
-    if (((RGB_channel) & (00100000)) == 1) PWM_RG_WriteCompare1(value);
-    if (((RGB_channel) & (01000000)) == 1) PWM_RG_WriteCompare2(value);
-    if (((RGB_channel) & (10000000)) == 1) PWM_B_WriteCompare(value);
+
+void activate_colors(uint8 RGB_channel,uint16 value){
+    if (((RGB_channel) & (00100000)) == 20) PWM_RG_WriteCompare1(value);
+    else PWM_RG_WriteCompare1(65535);
+    
+    if (((RGB_channel) & (01000000)) == 40) PWM_RG_WriteCompare2(value);
+    else PWM_RG_WriteCompare2(65535);
+    
+    if (((RGB_channel) & (10000000)) == 80) PWM_B_WriteCompare(value);
+    else PWM_B_WriteCompare(65535);
 } 
 
 
