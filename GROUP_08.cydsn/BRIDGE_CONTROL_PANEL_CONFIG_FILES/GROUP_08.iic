@@ -1,18 +1,190 @@
+; Status: None
+;1 sample
+w 08 00 20 p ;only red
+w 08 00 40 p ;only green
+w 08 00 80 p ;only blue
+w 08 00 60 p ;red & green
+w 08 00 A0 p ;red and blue
+w 08 00 C0 p ;green and blue
+w 08 00 E0 p ;all three colors
+;2 samples
+w 08 00 28 p ;only red
+w 08 00 48 p ;only green
+w 08 00 88 p ;only blue
+w 08 00 68 p ;red & green
+w 08 00 A8 p ;red and blue
+w 08 00 C8 p ;green and blue
+w 08 00 E8 p ;all three colors
+;3 samples
+w 08 00 30 p ;only red
+w 08 00 50 p ;only green
+w 08 00 90 p ;only blue
+w 08 00 70 p ;red & green
+w 08 00 B0 p ;red and blue
+w 08 00 D0 p ;green and blue
+w 08 00 F0 p ;all three colors
+;4 samples
+w 08 00 38 p ;only red
+w 08 00 58 p ;only green
+w 08 00 98 p ;only blue
+w 08 00 78 p ;red & green
+w 08 00 B8 p ;red and blue
+w 08 00 D8 p ;green and blue
+w 08 00 F8 p ;all three colors
+;---------------------------------------------------------------------------------------------------------------------------
 
-w 08 00 86 p
+; Status: Read Both
+; Modulator: LDR
+;1 sample
+w 08 00 23 p ;only red
+w 08 00 43 p ;only green
+w 08 00 83 p ;only blue
+w 08 00 63 p ;red & green
+w 08 00 A3 p ;red and blue
+w 08 00 C3 p ;green and blue
+w 08 00 E3 p ;all three colors
+;2 samples
+w 08 00 2B p ;only red
+w 08 00 4B p ;only green
+w 08 00 8B p ;only blue
+w 08 00 6B p ;red & green
+w 08 00 AB p ;red and blue
+w 08 00 CB p ;green and blue
+w 08 00 EB p ;all three colors
+;3 samples
+w 08 00 33 p ;only red
+w 08 00 53 p ;only green
+w 08 00 93 p ;only blue
+w 08 00 73 p ;red & green
+w 08 00 B3 p ;red and blue
+w 08 00 D3 p ;green and blue
+w 08 00 F3 p ;all three colors
+;4 samples
+w 08 00 3B p ;only red
+w 08 00 5B p ;only green
+w 08 00 9B p ;only blue
+w 08 00 7B p ;red & green
+w 08 00 BB p ;red and blue
+w 08 00 DB p ;green and blue
+w 08 00 FB p ;all three colors
 
+;Sample and plot both channels
+w 08 04 p r 08 @1temp_centiCelsius @0temp_centiCelsius p w 08 02 p r 08 @1light_LUX @0light_LUX p 
+
+; Modulator: TMP
+;1 sample
+w 08 00 27 p ;only red
+w 08 00 47 p ;only green
+w 08 00 87 p ;only blue
+w 08 00 67 p ;red & green
+w 08 00 A7 p ;red and blue
+w 08 00 C7 p ;green and blue
+w 08 00 E7 p ;all three colors
+;2 samples
+w 08 00 2F p ;only red
+w 08 00 4F p ;only green
+w 08 00 8F p ;only blue
+w 08 00 6F p ;red & green
+w 08 00 AF p ;red and blue
+w 08 00 CF p ;green and blue
+w 08 00 EF p ;all three colors
+;3 samples
+w 08 00 37 p ;only red
+w 08 00 57 p ;only green
+w 08 00 97 p ;only blue
+w 08 00 77 p ;red & green
+w 08 00 B7 p ;red and blue
+w 08 00 D7 p ;green and blue
+w 08 00 F7 p ;all three colors
+;4 samples
+w 08 00 3F p ;only red
+w 08 00 5F p ;only green
+w 08 00 9F p ;only blue
+w 08 00 7F p ;red & green
+w 08 00 BF p ;red and blue
+w 08 00 DF p ;green and blue
+w 08 00 FF p ;all three colors
+
+;Sample and plot both channels
+w 08 04 p r 08 @1temp_centiCelsius @0temp_centiCelsius p w 08 02 p r 08 @1light_LUX @0light_LUX p
+
+;---------------------------------------------------------------------------------------------------------------------------
+; Status: Read and modulate TMP
+;1 sample
+w 08 00 26 p ;only red
+w 08 00 46 p ;only green
+w 08 00 86 p ;only blue
+w 08 00 66 p ;red & green
+w 08 00 A6 p ;red and blue
+w 08 00 C6 p ;green and blue
+w 08 00 E6 p ;all three colors
+;2 samples
+w 08 00 2E p ;only red
+w 08 00 4E p ;only green
+w 08 00 8E p ;only blue
+w 08 00 6E p ;red & green
+w 08 00 AE p ;red and blue
+w 08 00 CE p ;green and blue
+w 08 00 EE p ;all three colors
+;3 samples
+w 08 00 36 p ;only red
+w 08 00 56 p ;only green
+w 08 00 96 p ;only blue
+w 08 00 76 p ;red & green
+w 08 00 B6 p ;red and blue
+w 08 00 D6 p ;green and blue
+w 08 00 F6 p ;all three colors
+;4 samples
+w 08 00 3E p ;only red
+w 08 00 5E p ;only green
+w 08 00 9E p ;only blue
+w 08 00 7E p ;red & green
+w 08 00 BE p ;red and blue
+w 08 00 DE p ;green and blue
+w 08 00 FE p ;all three colors
+
+;---------------------------------------------------------------------------------------------------------------------------
+;Sample and plot TMP channel
 w 08 04 p r 08 @1temp_centiCelsius @0temp_centiCelsius p
 
+; Status: Read and modulate LDR
+;1 sample
+w 08 00 21 p ;only red
+w 08 00 41 p ;only green
+w 08 00 81 p ;only blue
+w 08 00 61 p ;red & green
+w 08 00 A1 p ;red and blue
+w 08 00 C1 p ;green and blue
+w 08 00 E1 p ;all three colors
+;2 samples
+w 08 00 29 p ;only red
+w 08 00 49 p ;only green
+w 08 00 89 p ;only blue
+w 08 00 69 p ;red & green
+w 08 00 A9 p ;red and blue
+w 08 00 C9 p ;green and blue
+w 08 00 E9 p ;all three colors
+;3 samples
+w 08 00 31 p ;only red
+w 08 00 51 p ;only green
+w 08 00 91 p ;only blue
+w 08 00 71 p ;red & green
+w 08 00 B1 p ;red and blue
+w 08 00 D1 p ;green and blue
+w 08 00 F1 p ;all three colors
+;4 samples
+w 08 00 39 p ;only red
+w 08 00 59 p ;only green
+w 08 00 99 p ;only blue
+w 08 00 79 p ;red & green
+w 08 00 B9 p ;red and blue
+w 08 00 D9 p ;green and blue
+w 08 00 F9 p ;all three colors
 
-w 08 00 F9 p
-
+;Sample and plot LDR channel
 w 08 02 p r 08 @1light_LUX @0light_LUX p  
 
-
-w 08 00 B p
-w 08 04 p r 08 @1temp_centiCelsius @0temp_centiCelsius p w 08 02 p r 08 @1light_LUX @0light_LUX p ;sample both channels
-
-
+;---------------------------------------------------------------------------------------------------------------------------
 ; Enter DEVICE_STOPPED state (Write status to be 0b00)
 w 08 00 00 p
 
