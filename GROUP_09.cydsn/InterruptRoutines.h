@@ -16,6 +16,14 @@
     int32 digit_TMP;  //value in digit of TMP sensor from ADC
     int32 digit_LDR;  //value in digit of LDR sensor from ADC
     int32 mv_TMP;
+    int32 mv_LDR;
+    int32 average_TMP;
+    int32 average_LDR;
+    int32 sum_TMP;
+    int32 sum_LDR;
+    uint8_t AvgReady;
+    uint8 num_samples;
+    uint16_t average_samples;
 
     CY_ISR_PROTO (Custom_ISR_ADC);
 

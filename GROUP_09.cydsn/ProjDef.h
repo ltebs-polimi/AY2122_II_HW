@@ -50,20 +50,33 @@
     #define READ_REGISTERS 4
 
     // Define period
-    #define DEFAULT_PERIOD 200 
+    #define DEFAULT_PERIOD 200 // period defined in the top design 
 
     // Define masks
     #define MASK_AVERAGE_SAMPLES 0x18
     #define MASK_STATUS_REG      0x03
     #define MASK_LED_MODALITY    0x04
+    #define MASK_LED_CHANNEL     0xE0
+    
+    // Define LED channels
+    #define RED         1 //001
+    #define GREEN       2 //010
+    #define GREENRED    3 //011
+    #define BLUE        4 //100
+    #define BLUERED     5 //101
+    #define BLUEGREEN   6 //110
+    #define RGB         7 //111
     
     //Constants for sample conversions
-    #define TMP_SLOPE                   10      // (1000mV - 500mV) / (50°C - 25°C)  
-    #define TMP_INTERCEPT               500.0   // 500mV is the intercept @25°C - RGB LED is turned for T > 25°C
-    #define SERIES_RESISTANCE           990
-    #define ACTUAL_Vdd_mV               4650.0
-    #define TEN_TO_LDR_INTERCEPT        100000  // pow(10,q) = 100000 (q = 5)
+    #define TMP_SLOPE                   10.0    // (1000mV - 500mV) / (50°C - 25°C)  
+    #define TMP_INTERCEPT               500.0   // 500mV is the intercept @25°C - RGB LED is turned on for T > 25°C
+    #define SERIES_RESISTANCE           1000    // R2 = 1kOhm
+    #define ACTUAL_Vdd_mV               4820.0  
+    #define LDR_INTERCEPT               100000  // pow(10,q) = 100000 (q = 5)
     #define LDR_SLOPE                   -0.682
+    #define T_AMBIENT                   20
+    #define LDR_TH                      50      // dark room = 50 lux
+    #define OFFSET_TMP                  8       // offset of the sensor
 
 
 #endif
