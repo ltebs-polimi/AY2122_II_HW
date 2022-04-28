@@ -23,13 +23,13 @@ GROUP_04 - Franke Patrick & Canavate Chloé
 #define MSB_TMP 4               //Position for Most Significant Byte of the TMP average
 #define LSB_TMP 5               //position for Less Significant Byte of the TMP average
 
-//Define slaveBuffer of the EZI2C
+//Define slave buffer of the EZI2C
 uint8 slaveBuffer[SLAVE_BUFFER_SIZE];
 
 //Define the flag to read the value from the ADC and set it to 0
 volatile uint8 ReadValue = 0; 
 
-
+//Define the variables to calculate the output values of the sensors
 int32 sum_LDR;                  //Sum of LDR sensor samples to compute the average
 int32 sum_TMP;                  //Sum of TMP sensor samples to compute the average
 int32 average_LDR;              //Average of LDR sensor
@@ -43,10 +43,10 @@ uint8_t timer_period;           //Value to set the period of the timer according
 uint8_t led_modality;           //Value of the led modality
 uint8_t color_channel;          //Color combination of the RGB led
 
+//Define the variables for the modulation of the LED
 int32 PWM_val_LDR;
 int32 PWM_val_TMP;
 int32 cmp_val;
-
 
 
 
@@ -110,15 +110,16 @@ int main(void)
                     
                     nb_samples++;           //Increment nb of samples read
                     
-                    if (nb_samples == nb_average_samples)   //Check if the number of samples already done corresponds to the asked nb of samples
+                    if (nb_samples == nb_average_samples)   //Check if the number of samples already done corresponds to the asked number of samples
                     {    
-                        
-                        sprintf(message, "LDR: %ld, TMP: %ld \r\n", average_LDR, average_TMP);
-                        UART_PutString(message);
                         
                         //Compute the averages
                         average_LDR = sum_LDR / nb_average_samples;
                         average_TMP = sum_TMP / nb_average_samples;
+                        
+                        //Printing the output values of the calculation for debugging purposes
+                        sprintf(message, "LDR: %ld, TMP: %ld \r\n", average_LDR, average_TMP);
+                        UART_PutString(message);
                         
                         //Write in the buffer
                         slaveBuffer[MSB_LDR] = average_LDR >> 8;      //Write in the 3rd register the MSB of the LDR sensor average
@@ -209,7 +210,7 @@ int main(void)
         }    
         
         
-        //Modulation of the RGB led
+        //MODULATION OF THE RBG LED
         
         //Switch case according to user led modality choice (either LDR or TMP)
         switch(led_modality)
@@ -217,7 +218,7 @@ int main(void)
             case SLAVE_LED_LDR:
                 
                 //Threshold below which the environment is said to be dark
-                if (average_LDR < 400)     PWM_val_LDR = 0;    //The RGB led will be set to maximum intensity
+                if (average_LDR < 400)     PWM_val_LDR = 0;     //The RGB led will be set to maximum intensity
 
                 else    PWM_val_LDR = 20;                       //The RGB led will be turned off
                 
@@ -235,7 +236,7 @@ int main(void)
                                
                 else    //The TMP sensor outcome ranges between 9000 and 11000; the intensity will be modulated
                 {
-                    //Formula to normalize TMP sensor outcome between 0 and 1 and mulitiply with PWM's maximum compare value (20)
+                    //Formula to normalize TMP sensor outcome between 0 and 1 and mulitiply with PWM's maximum compare value (here: 20)
                     //To adapt compare value of the modulator
                     PWM_val_TMP = 20-((average_TMP-9000)/2000.0)*20;
                 }
