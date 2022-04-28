@@ -16,7 +16,7 @@
 #define T_AMB 10000 
 
 uint8_t slave_buffer[SLAVE_BUFFER_SIZE];
-uint8_t count = 0;
+
 int status = 0, samples = 0;
 _Bool red = 0, green = 0, blue = 0;
 int32 control = 0;
@@ -26,65 +26,71 @@ extern int32 temp, ldr;
 
 int main(void)
 {
-    CyGlobalIntEnable; /* Enable global interrupts. */
+    CyGlobalIntEnable;
     
-    //abilito timer
+    //set Timer
     Timer_Start();
     
-    //abilito interrupt
+    //set custom Interrupt
     isr_ADC_StartEx(Custom_ISR_ADC);
     
-    //abilito lo slave
+    //set Slave
     EZI2C_Start();
     EZI2C_Enable();
 
     
-    //set registro who_am_i
+    //set who_am_i register
     slave_buffer[1] = 0xBC;
-    //setto control register inizialmente a 0 con solo average = 1
+    //set control register = 0
     slave_buffer[0] = 0x00; 
     
     EZI2C_SetBuffer1(SLAVE_BUFFER_SIZE, SLAVE_BUFFER_SIZE - 5, slave_buffer);
 
     for(;;)
     {     
-        //controllo lo status e del numero di samples
+        /*check status and set the ON/OFF of the devices 
+            to reduce power consumption when not used.*/
         status = slave_buffer[0] & 0x03;
         if (status != 0) Device_Start(); 
         if (status == 0) Device_Stop(); 
         
+        //read the number of samples defined in the bridge control panel
         samples = ((slave_buffer[0] & 0b00011000)>>3);
-        samples = samples + 1; //altrimenti con 00 mi campiona 0 valori e con 11 ne campiona 3
+        //allows to have 1 to 4 samples, instead of 0 to 3
+        samples = samples + 1;
         
-        //Setto il timer in modo da inviare i dati sempre a 50 Hz
+        /*set the timer to send the signal always at 50Hz
+            (for example, if we set 4 samples we need a period of 12/4 = 3,
+            which @600Hz is 50ms*/
         Timer_WritePeriod(12/samples);
 
         
-        //campiono il registro per il led
+        //read the registers to determine the color of the LED
         red = ((slave_buffer[0] & 0b00100000)>>5);
         green = ((slave_buffer[0] & 0b01000000)>>6);
         blue = ((slave_buffer[0] & 0b10000000)>>7);
 
         
-        //campiono il registro per il led drive
+        //read the register for determine the LED modulation
         led_modality = ((slave_buffer[0] & 0b00000100)>>2);
  
+        //allows the modulation only if at least one of the color is selected
         if (red || green || blue)
         {
-            //regolo led con ldr
+            //modulate LED with ldr
             if (led_modality == 0)  control = 65535 - ldr;
             
-            //regolo led con temp
+            //modulate LED with temperature
             else 
             {
-                //determino valore
+                //determine control value for modulation
                 control = (temp - T_AMB)*(65535/55535);
                 if (control < 0)    control = 0;
             }
         }
 
         
-        //aggiusto i colori
+        //color modulation
         if (red == 1)    PWM_RG_WriteCompare1(control);
         else    PWM_RG_WriteCompare1(0);
         
