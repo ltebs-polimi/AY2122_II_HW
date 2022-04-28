@@ -8,6 +8,7 @@
 <files />
 <projects>
 <v>.\AdditionalLibrary.cylib\AdditionalLibrary.cyprj</v>
+<v>..\..\Assignment\Additional_Components_OLD.cydsn\Additional_Components.cylib\Additional_Components.cyprj</v>
 </projects>
 <workspace_id v="c620bf5c-3878-4d4a-925a-8c3e5c9bbde8" />
 <WriteAppVersionLastSavedWith v="4.4.0.80" />
@@ -16,6 +17,8 @@
 <wrkspc_dependencies>
 <wrkspc_dependency project="AdditionalLibrary.cylib\AdditionalLibrary.cyprj" dependency="${CyRoot}\psoc\content\default\CyAnnotationLibrary\CyAnnotationLibrary.cylib\CyAnnotationLibrary.cyprj" />
 <wrkspc_dependency project="AdditionalLibrary.cylib\AdditionalLibrary.cyprj" dependency="..\..\AnnotationLibrary\AnnotationLibrary_lib\AnnotationLibrary_lib.cylib\AnnotationLibrary_lib.cyprj" />
+<wrkspc_dependency project="..\..\Assignment\Additional_Components_OLD.cydsn\Additional_Components.cylib\Additional_Components.cyprj" dependency="${CyRoot}\psoc\content\default\CyAnnotationLibrary\CyAnnotationLibrary.cylib\CyAnnotationLibrary.cyprj" />
+<wrkspc_dependency project="..\..\Assignment\Additional_Components_OLD.cydsn\Additional_Components.cylib\Additional_Components.cyprj" dependency="..\..\..\AnnotationLibrary\AnnotationLibrary_lib\AnnotationLibrary_lib.cylib\AnnotationLibrary_lib.cyprj" />
 </wrkspc_dependencies>
 </CyGuid_dcbd9771-0334-43dc-9cc3-fe99dc3c5316>
 <CyGuid_63b68103-67f5-4406-8da6-5c8625765b82 type_name="CyDesigner.Common.ProjMgmt.Model.CyPrjMgmtWorkspaceSerialize+CyIgnoredSystemDepsList" version="1">

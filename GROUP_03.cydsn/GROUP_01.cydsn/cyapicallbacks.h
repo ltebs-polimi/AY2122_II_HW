@@ -1,10 +1,11 @@
 /* ========================================
  *
- * LTEBS - A.Y. 2021/2022, II semester
- * Assignment, Group 02
- * Authors: Federico Petraccia, Francesca Terranova
- * 
- * Header file for callbacks
+ * Copyright YOUR COMPANY, THE YEAR
+ * All Rights Reserved
+ * UNPUBLISHED, LICENSED SOFTWARE.
+ *
+ * CONFIDENTIAL AND PROPRIETARY INFORMATION
+ * WHICH IS THE PROPERTY OF your company.
  *
  * ========================================
 */
@@ -17,7 +18,4 @@
 
     
 #endif /* CYAPICALLBACKS_H */   
-
-
-/* [] END OF FILE */
-
+/* [] */
