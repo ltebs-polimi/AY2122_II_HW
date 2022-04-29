@@ -1,14 +1,8 @@
 /* ========================================
- *
- * Copyright YOUR COMPANY, THE YEAR
- * All Rights Reserved
- * UNPUBLISHED, LICENSED SOFTWARE.
- *
- * CONFIDENTIAL AND PROPRIETARY INFORMATION
- * WHICH IS THE PROPERTY OF your company.
- *
- * ========================================
+    AURORA PIERANTOZZI
+    LETIZIA MOZZORECCHIA
 */
+
 #include "project.h"
 #include "InterruptRoutines.h"
 #include "AMUX.h"
@@ -28,29 +22,33 @@
 
 //definitions of the slave bufferand number of samples to be averaged
 uint8_t buffer[BUFFERSIZE]; 
-uint8_t average_samples = 4; 
+uint8_t average_samples; 
 
 int main(void)
 {
     /*STARTING INTERRUPT AND USEFUL COMPONENTS FOR SAMPLING*/
     
-    CyGlobalIntEnable; 
+     
     EZI2C_Start();
     ADC_DelSig_Start();
     AMUX_Start();
     Timer_Start();
     isr_ADC_StartEx(My_ISR);
-    PWM_RG_Enable();
-    PWM_B_Enable();
+    PWM_B_Start();
+    PWM_B_WriteCompare(65000);
+    PWM_RG_Start();
+    PWM_RG_WriteCompare1(65000);
+    PWM_RG_WriteCompare2(65000);
+    
+    CyGlobalIntEnable;
     
     /*SLAVE BUFFER SETTING*/
     
-    //setting the initial values of the slave buffer register
-    buffer[CR1] = 00011001; //RGB off, 4 samples to be avg, LDR readout, sampling ldr
-    buffer[WhoAmI] = 0xBC; //fixed
+    buffer[CR1] = 0b00011001;   //initial value
+    buffer[WhoAmI] = 0xBC;      //fixed
     buffer[MSB_TEMP] = 0x00;
-    buffer[LSB_TEMP]= 0x00;
-    buffer[MSB_LDR]= 0x00;
+    buffer[LSB_TEMP] = 0x00;
+    buffer[MSB_LDR] = 0x00;
     buffer[LSB_LDR] = 0x00;
     
     //creating the EZI2C buffer 
@@ -58,7 +56,6 @@ int main(void)
     
     for(;;)
     { 
-    
     }
 }
 
