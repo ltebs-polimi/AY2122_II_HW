@@ -17,7 +17,7 @@
 #define TMP_channel 1
 
 
-int32 temp = 0, ldr = 0, value_ldr = 0, value_temp;
+int32 temp = 0, ldr = 0, value_ldr = 0, value_temp = 0;
 int32 temp_old = 0, ldr_old = 0;
 
 uint8_t i = 0;
@@ -94,11 +94,7 @@ CY_ISR(Custom_ISR_ADC)
         //average of the sampled values
         temp = temp/samples;
         
-        //virtual filter to limit some overshooting in the graph
-        if (temp - temp_old < -50)  temp = temp_old;
-        else temp_old = temp;
-        
-        ////set the unused registers to 0
+        //set the unused registers to 0
         slave_buffer[2]=0; 
         slave_buffer[3]=0;
         
@@ -141,9 +137,6 @@ CY_ISR(Custom_ISR_ADC)
         temp = temp/samples;
         
         //virtual filters to limit some overshooting in the graph
-        if (temp - temp_old < -50)  temp = temp_old;
-        else temp_old = temp;
-        
         if (ldr - ldr_old < -1000)  ldr = ldr_old;
         else    ldr_old = ldr;        
         
