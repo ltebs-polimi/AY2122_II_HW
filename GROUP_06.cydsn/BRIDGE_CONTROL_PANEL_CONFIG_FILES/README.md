@@ -1,1 +1,1 @@
-Please save in this folder the .iic and .ini file for Bridge Control Panel
+Per avvisare che Letizia ha avuto problemi con la virtual box del MAC nelle ultime settimane: per questo motivo la maggiorparte delle modifche e delle commit sono state effettuate da Aurora. 
