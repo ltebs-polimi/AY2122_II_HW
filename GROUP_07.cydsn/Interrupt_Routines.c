@@ -18,16 +18,15 @@
 
 
 int32 temp = 0, ldr = 0, value_ldr = 0, value_temp = 0;
-int32 temp_old = 0, ldr_old = 0;
 
 uint8_t i = 0;
 
 CY_ISR(Custom_ISR_ADC)
 {   
     //status = 0, everything is turned OFF
-    //set variables to 0
     if (status == 0)
     {
+        //set variables to 0
         temp = 0;
         ldr = 0;
     }
@@ -35,8 +34,6 @@ CY_ISR(Custom_ISR_ADC)
     //status = 1, LDR sampling
     if (status == 1)
     {
-        ldr_old = 0;
-        
         //sample LDR channel
         AMux_1_FastSelect(LDR_channel);
         
@@ -55,10 +52,6 @@ CY_ISR(Custom_ISR_ADC)
         
         //average of the sampled values
         ldr = ldr/samples;
-        
-        //virtual filter to limit some overshooting in the graph
-        if (ldr - ldr_old < -1000)  ldr = ldr_old;
-        else    ldr_old = ldr;
         
         //transmission of the sampled values
         slave_buffer[2] = ldr >> 8;
@@ -134,11 +127,7 @@ CY_ISR(Custom_ISR_ADC)
         }
         
         ldr = ldr/samples;
-        temp = temp/samples;
-        
-        //virtual filters to limit some overshooting in the graph
-        if (ldr - ldr_old < -1000)  ldr = ldr_old;
-        else    ldr_old = ldr;        
+        temp = temp/samples;     
         
         //transmission of the ldr values
         slave_buffer[2] = ldr >> 8;
