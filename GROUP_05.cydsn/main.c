@@ -31,26 +31,26 @@ int main(void)
 {
     //initializing functions 
     
-    
-    
     EZI2C_Start();
     
     ADC_DelSig_Start();
    
     AMUX_Start();
     
+    Timer_Start();
+    
     isr_ADC_StartEx(My_ISR);
     
-    Timer_Start();
-
-    PWM_RG_Enable();
-    PWM_B_ENable(); 
+    Clock_PWM_Start();
+    
+    PWM_RG_Start();
+    PWM_B_Start(); 
     
     CyGlobalIntEnable; 
     
     
     //setting the initial values of the buffer register 
-    buffer[CR1] = 00011001; //initialized at 4 samples, the device is stopped, LDR modality 
+    buffer[CR1] = 0b00011001; //initialized at 4 samples, the device is stopped, LDR modality 
     buffer[WhoAmI] = 0xBC;
     buffer [MSB_TEMP] = 0x00;
     buffer [LSB_TEMP]= 0x00;
