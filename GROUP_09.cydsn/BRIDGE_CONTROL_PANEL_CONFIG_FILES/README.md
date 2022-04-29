@@ -1,0 +1,1 @@
+Please save in this folder the .iic and .ini file for Bridge Control Panel
