@@ -50,8 +50,7 @@ int main(void)
     slaveBuffer[2] = 0; ///< Ch1 Bit 15-8
     slaveBuffer[3] = 0; ///< Ch1 Bit 07-0
     slaveBuffer[4] = 0; ///< Ch0 Bit 15-8
-    slaveBuffer[5] = 0; ///< Ch0 Bit 07-0
-    
+    slaveBuffer[5] = 0; ///< Ch0 Bit 07-0    
     
     // Set up EZI2C buffer
     EZI2C_SetBuffer1(SLAVE_BUFFER_SIZE, BUFFER_RW_SIZE ,slaveBuffer);
@@ -59,7 +58,16 @@ int main(void)
     // Set up the PWM for the R, G, B channels
     RGBLed_Start();
     
-    // Start with the RGB led switched off
+    // Set values of parameters in the default configuration of the registers
+    sampling_status=0;
+    led_modality = 0;
+    num_avg_samples=1;
+    sum_TMP=0;
+    sum_LDR=0;
+    temp_celsius=0;
+    light_lux=0;
+    
+    //Start with RGB led off
     RGBLed_WriteRed(RGB_LED_OFF);
     RGBLed_WriteGreen(RGB_LED_OFF);
     RGBLed_WriteBlue(RGB_LED_OFF);

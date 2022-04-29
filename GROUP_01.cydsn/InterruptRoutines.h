@@ -30,8 +30,8 @@
     uint8 sampling_status;
     uint8 led_modality;
     uint8 counter_samples;
-    uint8 PeriodoTimer;
     uint8 flag_send;
+    uint8 num_avg_samples;    
     
     int32 TMP_mv;
     int32 TMP_value;

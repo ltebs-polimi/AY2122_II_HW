@@ -117,10 +117,26 @@ CY_ISR(Custom_Timer_ADC_ISR)
             ADC_DelSig_StopConvert();
             AMux_DisconnectAll();
         break;
+            
+        case 0x01: ///< Light readout
+            temp_celsius=0;
+            AMux_FastSelect(LDR_CH);
+            if(counter_samples < num_avg_samples) ///< data are sampled until the number of samples to compute the average is reached
+            {
+                LDR_value = ADC_DelSig_Read32();
+                if(LDR_value < 0) LDR_value = 0;
+                if(LDR_value > 65535) LDR_value = 65535;
+                LDR_mv = ADC_DelSig_CountsTo_mVolts(LDR_value);
+            
+                sum_LDR = (sum_LDR + LDR_mv);
+                
+                counter_samples ++;
+            }
+            break;
         
     
-        case 0x01: ///< Temperature readout
-            
+        case 0x02: ///< Temperature readout
+            light_lux=0;
             AMux_FastSelect(TMP_CH);
             if(counter_samples < num_avg_samples) ///< data are sampled until the number of samples to compute the average is reached
             {
@@ -135,20 +151,7 @@ CY_ISR(Custom_Timer_ADC_ISR)
             } 
            
             break;
-        case 0x02: ///< Light readout
-            AMux_FastSelect(LDR_CH);
-            if(counter_samples < num_avg_samples) ///< data are sampled until the number of samples to compute the average is reached
-            {
-                LDR_value = ADC_DelSig_Read32();
-                if(LDR_value < 0) LDR_value = 0;
-                if(LDR_value > 65535) LDR_value = 65535;
-                LDR_mv = ADC_DelSig_CountsTo_mVolts(LDR_value);
-            
-                sum_LDR = (sum_LDR + LDR_mv);
-                
-                counter_samples ++;
-            }
-            break;
+
         case 0x03: ///< Temperature and light readout
             if(counter_samples < num_avg_samples) ///< data are sampled until the number of samples to compute the average is reached
             {
@@ -201,6 +204,7 @@ CY_ISR(Custom_Timer_ADC_ISR)
 
         }
         
+        // If the temperature is stable for 0.5 seconds (250 counts at 500 Hz), then update the temperature value
         if(stable==250){
             temp_celsius=new_T;
             stable=0;
