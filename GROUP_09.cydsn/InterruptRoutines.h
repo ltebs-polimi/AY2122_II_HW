@@ -1,6 +1,6 @@
 /* ========================================
  *
- * \ authors : Giorgio Allegri - Luca Pavirani
+ * \ Authors : Giorgio Allegri - Luca Pavirani
  * 
  * \ Header file for Interrupt Routines
  *
@@ -21,7 +21,10 @@
     int32 average_LDR;
     int32 sum_TMP;
     int32 sum_LDR;
+    
+    // Define the flag to read the value from the ADC and set it to 0
     uint8_t AvgReady;
+    
     uint8 num_samples;
     uint16_t average_samples;
 

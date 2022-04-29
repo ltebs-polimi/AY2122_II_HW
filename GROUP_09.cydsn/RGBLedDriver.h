@@ -1,6 +1,6 @@
 /* ========================================
  *
- * \ authors : Giorgio Allegri - Luca Pavirani
+ * \ Authors : Giorgio Allegri - Luca Pavirani
  * 
  * \ Header file for RGB Led Driver
  *
