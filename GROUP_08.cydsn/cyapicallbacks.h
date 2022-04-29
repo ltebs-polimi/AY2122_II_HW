@@ -1,11 +1,9 @@
 /* ========================================
  *
- * Copyright YOUR COMPANY, THE YEAR
- * All Rights Reserved
- * UNPUBLISHED, LICENSED SOFTWARE.
- *
- * CONFIDENTIAL AND PROPRIETARY INFORMATION
- * WHICH IS THE PROPERTY OF your company.
+ * Authors: Alfonzo Massimo, Mazzucchelli Umberto
+ * Date: 27/04/2022
+ * 
+ * Header for callbacks
  *
  * ========================================
 */
