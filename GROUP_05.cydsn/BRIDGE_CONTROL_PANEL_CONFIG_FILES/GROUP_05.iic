@@ -1,0 +1,31 @@
+;If you want to change the RGB color, set 7,6 and 5 bits of the CR1
+
+;READ TEMPERATURE SENSOR (BLUE)
+; w 08 00 9E p ; to average on 4 samples (0b 1001 1110)
+; w 08 00 96 p ; to average on 3 samples (0b 1001 0110
+; w 08 00 8E p ;to average on 2 samples (0b 1000 1110)
+w 08 00 86 p ;to average on 1 sample (1000 0110)
+w 08 04 p 
+r 08 @1TEMP @0TEMP p
+
+
+;READ LDR SENSOR (RED)
+; w 08 00 39 p ;to average 4 samples (0b0011 1001)
+; w 08 00 31 p ;to average on 3 samples (0b0011 0001)
+; w 08 00 31 p ; to average on 2 samples (0b 0010 1001)
+w 08 00 21 p ;to average on 1 sample (0b 0010 0001)
+w 08 02 p 
+r 08 @1LDR @0LDR p
+
+;READ BOTH SENSORS (OFF)
+; w 08 00 1B p ; to average on 4 samples (0b 0001 1011)
+; w 08 00 13 p ; to average on 3 samples (0b 0001 0011)
+; w 08 00 0B p ;to average on 2 samples (0b 0000 1011)
+w 08 00 03 p ;to average on 1 sample (0b 0000 0011)
+w 08 02 p
+r 08 @1LDR @0LDR p
+w 08 04 p
+r 08 @1TEMP @0TEMP p
+
+;STOP
+w 08 00 00 p 
